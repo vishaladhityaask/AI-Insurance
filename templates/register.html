@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register Worker – AI Insurance</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">⚡ AI<span>Insurance</span></div>
+  <div class="nav-links">
+    <a href="{{ url_for('index') }}">Home</a>
+    <a href="{{ url_for('register') }}" class="active">Register</a>
+    <a href="{{ url_for('dashboard') }}">Dashboard</a>
+    <a href="{{ url_for('admin') }}">Admin</a>
+  </div>
+</nav>
+
+<main>
+  <div class="form-page">
+    <div class="hero-tag" style="margin-bottom:16px;">👷 New Worker Registration</div>
+    <div class="form-title">Register a Worker</div>
+    <div class="form-subtitle">Fill in the details below. The AI engine will calculate the premium in real-time based on occupation, age, and live weather risk.</div>
+
+    <form method="POST" action="{{ url_for('register') }}">
+
+      <!-- Personal Info -->
+      <div class="form-section-label">Personal Information</div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Full Name *</label>
+          <input type="text" name="full_name" placeholder="e.g. Ravi Kumar" required>
+        </div>
+        <div class="form-group">
+          <label>Age *</label>
+          <input type="number" name="age" id="age" min="18" max="65" placeholder="e.g. 34" required>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Email Address *</label>
+          <input type="email" name="email" placeholder="worker@example.com" required>
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="tel" name="phone" placeholder="9876543210">
+        </div>
+      </div>
+
+      <!-- Work Details -->
+      <div class="form-section-label mt-6">Work Details</div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label>Occupation *</label>
+          <select name="occupation" id="occupation" required>
+            <option value="">— Select occupation —</option>
+            <optgroup label="Swiggy">
+              <option value="Swiggy Delivery Partner">Swiggy Delivery Partner</option>
+              <option value="Swiggy Instamart Picker">Swiggy Instamart Picker</option>
+              <option value="Swiggy Fleet Supervisor">Swiggy Fleet Supervisor</option>
+              <option value="Swiggy Restaurant Partner">Swiggy Restaurant Partner</option>
+            </optgroup>
+            <optgroup label="Zepto">
+              <option value="Zepto Delivery Partner">Zepto Delivery Partner</option>
+              <option value="Zepto Dark Store Picker">Zepto Dark Store Picker</option>
+              <option value="Zepto Dark Store Packer">Zepto Dark Store Packer</option>
+              <option value="Zepto Store Manager">Zepto Store Manager</option>
+            </optgroup>
+            <optgroup label="Amazon">
+              <option value="Amazon Delivery Associate">Amazon Delivery Associate</option>
+              <option value="Amazon Warehouse Associate">Amazon Warehouse Associate</option>
+              <option value="Amazon Sortation Associate">Amazon Sortation Associate</option>
+              <option value="Amazon Flex Delivery">Amazon Flex Delivery</option>
+              <option value="Amazon Last Mile Supervisor">Amazon Last Mile Supervisor</option>
+              <option value="Amazon Returns Associate">Amazon Returns Associate</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Region *</label>
+          <select name="region" id="region" required>
+            <option value="">— Select region —</option>
+            <option value="North Zone">North Zone</option>
+            <option value="South Zone">South Zone</option>
+            <option value="East Zone">East Zone</option>
+            <option value="West Zone">West Zone</option>
+            <option value="Central Zone">Central Zone</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Live Preview -->
+      <div class="premium-preview" id="preview">
+        <div style="font-size:.75rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px;">
+          <span class="live-dot"></span>AI-Calculated Premium Preview
+        </div>
+        <div class="premium-main" id="preview-amount">—</div>
+        <div style="font-size:.82rem;color:var(--muted);margin-top:4px;">per year &nbsp;·&nbsp; <span id="preview-risk">—</span> risk</div>
+        <div class="premium-breakdown" id="preview-breakdown"></div>
+        <div id="preview-weather" style="margin-top:10px;font-size:.78rem;color:var(--muted);"></div>
+      </div>
+
+      <div class="mt-6">
+        <button type="submit" class="btn btn-primary btn-full" style="padding:14px;">
+          Register & Generate Policy →
+        </button>
+      </div>
+
+    </form>
+  </div>
+</main>
+
+<footer>
+  <div>AI Insurance Phase 1 &nbsp;·&nbsp; Built with Flask + MySQL &nbsp;·&nbsp; © 2024</div>
+</footer>
+
+<script>
+  const occupationEl = document.getElementById('occupation');
+  const regionEl     = document.getElementById('region');
+  const ageEl        = document.getElementById('age');
+  const preview      = document.getElementById('preview');
+
+  let debounceTimer;
+
+  async function fetchPreview() {
+    const occ    = occupationEl.value;
+    const region = regionEl.value;
+    const age    = ageEl.value;
+    if (!occ || !region || !age) return;
+
+    try {
+      const res = await fetch('/api/calculate-premium', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ occupation: occ, region, age: parseInt(age) })
+      });
+      const data = await res.json();
+
+      document.getElementById('preview-amount').textContent =
+        '₹' + data.final_premium.toLocaleString('en-IN');
+
+      const riskColors = { low: '#00e5a0', medium: '#ffb347', high: '#ff4d6d' };
+      const riskEl = document.getElementById('preview-risk');
+      riskEl.textContent = data.risk_level.toUpperCase();
+      riskEl.style.color = riskColors[data.risk_level] || '#fff';
+
+      const bd = data.breakdown;
+      document.getElementById('preview-breakdown').innerHTML = `
+        <div class="pb-row"><span>Base premium</span><strong>₹${bd.step1_base.toLocaleString('en-IN')}</strong></div>
+        <div class="pb-row"><span>After occupation factor (×${data.occupation_factor})</span><strong>₹${bd.step2_after_occ.toLocaleString('en-IN')}</strong></div>
+        <div class="pb-row"><span>After age factor (×${data.age_factor})</span><strong>₹${bd.step3_after_age.toLocaleString('en-IN')}</strong></div>
+        <div class="pb-row"><span>After weather risk (×${data.weather_factor})</span><strong style="color:var(--accent)">₹${bd.step4_final.toLocaleString('en-IN')}</strong></div>
+      `;
+
+      const w = data.weather;
+      document.getElementById('preview-weather').innerHTML =
+        `📍 ${region} weather: <strong>${w.condition}</strong> · ${w.temperature}°C · ${w.humidity}% humidity · ${w.wind_speed} km/h wind`;
+
+      preview.classList.add('show');
+    } catch(e) {
+      console.error(e);
+    }
+  }
+
+  function debounce() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(fetchPreview, 400);
+  }
+
+  occupationEl.addEventListener('change', fetchPreview);
+  regionEl.addEventListener('change', fetchPreview);
+  ageEl.addEventListener('input', debounce);
+</script>
+
+</body>
+</html>

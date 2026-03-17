@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Insurance – Smart Protection for Workers</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">⚡ AI<span>Insurance</span></div>
+  <div class="nav-links">
+    <a href="{{ url_for('index') }}" class="active">Home</a>
+    <a href="{{ url_for('register') }}">Register</a>
+    <a href="{{ url_for('dashboard') }}">Dashboard</a>
+    <a href="{{ url_for('admin') }}">Admin</a>
+  </div>
+</nav>
+
+<main>
+  <section class="hero">
+    <div class="container">
+      <div class="hero-tag">⚡ AI-Powered · Weather-Aware · Phase 1</div>
+      <h1>Insurance that <em>thinks</em><br>for India's workers</h1>
+      <p>Real-time weather risk simulation, AI premium calculation, and instant worker registration — all in one platform.</p>
+      <div class="hero-cta">
+        <a href="{{ url_for('register') }}" class="btn btn-primary">Register Worker →</a>
+        <a href="{{ url_for('admin') }}" class="btn btn-outline">Admin Panel</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="container">
+
+    <!-- Stats Row -->
+    <div class="grid-4 mb-6">
+      <div class="stat-card">
+        <div class="stat-label">Total Workers</div>
+        <div class="stat-value accent">{{ stats.total_workers }}</div>
+        <div class="stat-sub">Registered in system</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Active Policies</div>
+        <div class="stat-value">{{ stats.active_workers }}</div>
+        <div class="stat-sub">Currently covered</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg. Premium</div>
+        <div class="stat-value">₹{{ stats.avg_premium }}</div>
+        <div class="stat-sub">Per year</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Claims Filed</div>
+        <div class="stat-value">{{ stats.total_claims }}</div>
+        <div class="stat-sub">Total across all workers</div>
+      </div>
+    </div>
+
+    <!-- Live Weather -->
+    <div class="card mb-6">
+      <div class="card-header">
+        <div class="card-title"><span class="live-dot"></span>Live Weather Risk — All Zones</div>
+        <small class="text-muted">Auto-updated on page load</small>
+      </div>
+      <div class="weather-strip">
+        {% for w in weather_all %}
+        <div class="weather-card">
+          <div class="weather-region">{{ w.region }}</div>
+          <div class="weather-condition">{{ w.condition }}</div>
+          <div class="weather-meta">
+            🌡 {{ w.temperature }}°C<br>
+            💧 {{ w.humidity }}% humidity<br>
+            🌬 {{ w.wind_speed }} km/h
+          </div>
+          {% set rm = w.risk_multiplier %}
+          {% if rm < 1.10 %}
+            <div class="weather-risk risk-low">Low ×{{ rm }}</div>
+          {% elif rm < 1.25 %}
+            <div class="weather-risk risk-medium">Medium ×{{ rm }}</div>
+          {% else %}
+            <div class="weather-risk risk-high">High ×{{ rm }}</div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- How It Works -->
+    <div class="card mb-6">
+      <div class="card-header">
+        <div class="card-title">How the AI Engine Works</div>
+      </div>
+      <div class="grid-3">
+        <div>
+          <div style="font-size:1.8rem;margin-bottom:10px;">👷</div>
+          <div style="font-family:var(--font-head);font-weight:700;margin-bottom:6px;">Occupation Risk</div>
+          <div class="text-muted" style="font-size:.85rem;">15+ occupations mapped to risk tiers. Construction, mining, and agriculture carry higher base premiums.</div>
+        </div>
+        <div>
+          <div style="font-size:1.8rem;margin-bottom:10px;">🌦</div>
+          <div style="font-family:var(--font-head);font-weight:700;margin-bottom:6px;">Weather Simulation</div>
+          <div class="text-muted" style="font-size:.85rem;">Real-time weather risk per region. Monsoon seasons, extreme heat, and storms adjust premiums automatically.</div>
+        </div>
+        <div>
+          <div style="font-size:1.8rem;margin-bottom:10px;">📊</div>
+          <div style="font-family:var(--font-head);font-weight:700;margin-bottom:6px;">Age Factor</div>
+          <div class="text-muted" style="font-size:.85rem;">Workers under 25 and over 50 carry adjusted premiums, reflecting actuarial risk curves.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Premium Formula -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Premium Formula</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:var(--r);padding:16px;font-family:var(--font-mono);font-size:.88rem;color:var(--accent);letter-spacing:.02em;">
+        Final Premium = Base × Occupation Factor × Age Factor × Weather Risk Multiplier
+      </div>
+      <div class="mt-4 text-muted" style="font-size:.82rem;">
+        Example: ₹5,000 (construction) × 1.40 × 1.00 × 1.20 (heavy rain) = <strong class="text-accent">₹8,400 / year</strong>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <div>AI Insurance Phase 1 &nbsp;·&nbsp; Built with Flask + MySQL &nbsp;·&nbsp; © 2024</div>
+</footer>
+
+</body>
+</html>
