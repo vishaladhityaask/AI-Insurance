@@ -1,250 +1,193 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Worker Dashboard – AI Insurance</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dashboard – GigShield</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
 </head>
 <body>
 
-<nav>
-  <div class="nav-brand">⚡ AI<span>Insurance</span></div>
-  <div class="nav-links">
-    <a href="{{ url_for('index') }}">Home</div>
-    <a href="{{ url_for('register') }}">Register</a>
-    <a href="{{ url_for('dashboard') }}" class="active">Dashboard</a>
-    <a href="{{ url_for('admin') }}">Admin</a>
+<!-- ── NAVBAR ─────────────────────────────────────────────── -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="/">Gig<span>Shield</span></a>
+    <div class="nav-links">
+      <a href="/register" class="btn btn-outline btn-sm">+ New Worker</a>
+      <a href="/admin" class="nav-link">Admin</a>
+    </div>
   </div>
 </nav>
 
-<main>
-  <div class="container dash-page">
-
-    {% if not worker and not reg_info %}
-    <!-- No worker selected -->
-    <div style="text-align:center;padding:80px 0;">
-      <div style="font-size:3rem;margin-bottom:16px;">🔍</div>
-      <div style="font-family:var(--font-head);font-size:1.4rem;font-weight:700;margin-bottom:8px;">No Worker Selected</div>
-      <div class="text-muted mb-6">Register a worker first, or enter a Worker ID to view their dashboard.</div>
-      <form style="display:flex;gap:10px;justify-content:center;align-items:center;max-width:360px;margin:0 auto;" method="GET" action="{{ url_for('dashboard') }}">
-        {# redirect via JS below #}
-        <input type="number" id="wid-input" placeholder="Worker ID (e.g. 1)" min="1"
-               style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:10px 14px;color:var(--text);font-family:var(--font-mono);font-size:.9rem;flex:1;outline:none;">
-        <button type="button" onclick="goToWorker()" class="btn btn-primary">View →</button>
-      </form>
-      <div class="mt-6">
-        <a href="{{ url_for('register') }}" class="btn btn-outline">+ Register New Worker</a>
-      </div>
+<!-- ── FLASH MESSAGES ─────────────────────────────────────── -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="container" style="padding-top:1.5rem">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }}">
+          {{ message }}
+        </div>
+      {% endfor %}
     </div>
-    <script>
-      function goToWorker(){
-        const id = document.getElementById('wid-input').value;
-        if(id) window.location.href = '/dashboard/' + id;
-      }
-    </script>
+  {% endif %}
+{% endwith %}
 
-    {% else %}
+<!-- ── DASHBOARD CONTENT ──────────────────────────────────── -->
+<section class="dash-page">
+  <div class="container">
 
-    {% if reg_info %}
-    <div class="alert alert-success">
-      ✅ Worker <strong>{{ reg_info.name }}</strong> registered successfully! Policy ID: #{{ reg_info.id }}
+    <!-- Page heading -->
+    <div class="fu" style="margin-bottom:2rem">
+      <span class="label">Worker Dashboard</span>
+      <h2 class="section-title">Welcome back, {{ worker.name.split()[0] }} 👋</h2>
+      <p class="muted">Your insurance overview and live weather risk — data from MySQL via Flask.</p>
     </div>
-    {% endif %}
 
-    {% if worker %}
-    <div class="dash-header">
+    <div class="dash-grid">
+
+      <!-- ── LEFT COLUMN: Profile + Premium ── -->
       <div>
-        <div class="dash-name">{{ worker.full_name }}</div>
-        <div class="dash-meta">Worker ID: #{{ worker.id }} &nbsp;·&nbsp; {{ worker.occupation }} &nbsp;·&nbsp; {{ worker.region }}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <span class="badge badge-{{ worker.status }}">{{ worker.status }}</span>
-        {% if worker.risk_level == 'high' %}
-          <span class="badge" style="background:rgba(255,77,109,.12);color:var(--high);">High Risk</span>
-        {% elif worker.risk_level == 'medium' %}
-          <span class="badge" style="background:rgba(255,179,71,.12);color:var(--medium);">Med Risk</span>
-        {% else %}
-          <span class="badge" style="background:rgba(0,229,160,.12);color:var(--low);">Low Risk</span>
-        {% endif %}
-      </div>
-    </div>
 
-    <div class="grid-2">
-      <!-- Policy Details -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Policy Details</div>
-          <div class="card-icon">📋</div>
-        </div>
-        <div class="detail-grid">
-          <div class="detail-item">
-            <label>Email</label>
-            <span>{{ worker.email }}</span>
+        <!-- Profile card -->
+        <div class="profile-card fu fu1" style="margin-bottom:1rem">
+          <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.3rem">
+            <div class="avatar">{{ worker.name[0].upper() }}</div>
+            <div>
+              <h5 style="font-size:1.15rem;margin-bottom:.1rem">{{ worker.name }}</h5>
+              <span class="muted" style="font-size:.82rem">Worker ID #{{ worker.id }}</span>
+            </div>
           </div>
-          <div class="detail-item">
-            <label>Phone</label>
-            <span>{{ worker.phone or '—' }}</span>
+          <div class="info-row">
+            <span class="il">City</span>
+            <span class="iv">{{ worker.city }}</span>
           </div>
-          <div class="detail-item">
-            <label>Age</label>
-            <span>{{ worker.age }} years</span>
+          <div class="info-row">
+            <span class="il">Platform</span>
+            <span class="iv">{{ worker.platform }}</span>
           </div>
-          <div class="detail-item">
-            <label>Occupation</label>
-            <span>{{ worker.occupation }}</span>
+          <div class="info-row">
+            <span class="il">Avg Daily Income</span>
+            <span class="iv">₹{{ worker.daily_income }}</span>
           </div>
-          <div class="detail-item">
-            <label>Region</label>
-            <span>{{ worker.region }}</span>
-          </div>
-          <div class="detail-item">
-            <label>Registered</label>
-            <span>{{ worker.registered_at.strftime('%d %b %Y') if worker.registered_at else '—' }}</span>
+          <div class="info-row">
+            <span class="il">Coverage Tier</span>
+            <span class="iv" style="color:var(--teal)">{{ coverage.description.split('–')[0].strip() }}</span>
           </div>
         </div>
+
+        <!-- Premium block -->
+        <div class="premium-block fu fu2">
+          <div style="font-size:.72rem;color:var(--muted);letter-spacing:.09em;text-transform:uppercase;font-weight:700;margin-bottom:.65rem">
+            Your Weekly Premium
+          </div>
+          <span class="premium-amt">₹{{ worker.premium }}</span>
+          <div class="premium-lbl">per week &nbsp;·&nbsp; auto-deducted</div>
+          <hr class="divider" style="border-color:rgba(255,153,51,.2);margin:.9rem 0"/>
+          <div style="font-size:.85rem;color:var(--muted)">
+            Coverage up to
+            <span style="color:var(--saffron);font-weight:700">₹{{ coverage.weekly_coverage }}/week</span>
+          </div>
+          <div style="font-size:.78rem;color:var(--muted);margin-top:.2rem">
+            {{ coverage.description }}
+          </div>
+        </div>
+
       </div>
 
-      <!-- Premium Breakdown -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Premium Breakdown</div>
-          <div class="card-icon">💰</div>
-        </div>
-        <div style="margin-bottom:4px;font-size:.75rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;">Annual Premium</div>
-        <div style="font-family:var(--font-head);font-size:2.4rem;font-weight:800;color:var(--accent);margin-bottom:16px;">
-          ₹{{ "{:,.0f}".format(worker.final_premium) }}
-        </div>
-        <div class="premium-breakdown" style="display:flex;flex-direction:column;gap:6px;">
-          <div class="pb-row">
-            <span class="text-muted">Base premium</span>
-            <strong>₹{{ "{:,.0f}".format(worker.base_premium) }}</strong>
-          </div>
-          <div class="pb-row">
-            <span class="text-muted">Weather factor</span>
-            <strong>×{{ worker.weather_factor }}</strong>
-          </div>
-          <div style="border-top:1px solid var(--border);padding-top:8px;" class="pb-row">
-            <span class="text-muted">Final premium</span>
-            <strong class="text-accent">₹{{ "{:,.0f}".format(worker.final_premium) }}</strong>
-          </div>
-        </div>
-        <div class="mt-4">
-          <button class="btn btn-outline btn-sm btn-full" onclick="refreshPremium({{ worker.id }})">
-            🔄 Recalculate with live weather
-          </button>
-        </div>
-      </div>
-    </div>
+      <!-- ── RIGHT COLUMN: Weather + Coverage ── -->
+      <div>
 
-    <!-- Claims -->
-    <div class="mt-6">
-      <div class="section-title">Claims History</div>
-      {% if claims %}
-      <div class="card table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Claim ID</th>
-              <th>Type</th>
-              <th>Amount</th>
-              <th>Status</th>
-              <th>Filed On</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for c in claims %}
-            <tr>
-              <td class="text-muted">#{{ c.id }}</td>
-              <td>{{ c.claim_type or '—' }}</td>
-              <td>{% if c.amount %}₹{{ "{:,.0f}".format(c.amount) }}{% else %}—{% endif %}</td>
-              <td>
-                <span class="badge {% if c.status == 'approved' %}badge-active{% elif c.status == 'rejected' %}badge-suspended{% else %}badge-pending{% endif %}">
-                  {{ c.status }}
-                </span>
-              </td>
-              <td class="text-muted">{{ c.filed_at.strftime('%d %b %Y') if c.filed_at else '—' }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      {% else %}
-      <div class="card text-center text-muted" style="padding:32px;">No claims filed yet.</div>
-      {% endif %}
-    </div>
+        <!-- Weather risk card — filled by Jinja from insurance_model.py -->
+        <div class="weather-card fu fu2 {{ weather.risk_level | lower }}" id="weather-card">
+          <div class="w-top">
+            <div>
+              <div style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.09em;font-weight:700;margin-bottom:.6rem">
+                Live Weather Risk — {{ worker.city }}
+              </div>
+              <div style="display:flex;align-items:center;gap:.9rem">
+                <span class="w-icon">{{ weather.icon }}</span>
+                <div>
+                  <h4 style="margin:0;font-size:1.4rem">{{ weather.weather }}</h4>
+                  <span class="risk-pill {{ weather.risk_level | lower }}">
+                    {{ weather.risk_level }} Risk
+                  </span>
+                </div>
+              </div>
+            </div>
+            <!-- Coverage status -->
+            <div style="text-align:right">
+              <div style="font-size:.72rem;color:var(--muted);margin-bottom:.3rem">Coverage Status</div>
+              {% if weather.risk_level == 'High' %}
+                <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;color:var(--danger)">🔴 TRIGGERED</div>
+                <div style="font-size:.78rem;color:var(--muted)">Payout processing…</div>
+              {% elif weather.risk_level == 'Medium' %}
+                <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;color:var(--warn)">🟡 MONITORING</div>
+                <div style="font-size:.78rem;color:var(--muted)">Watching conditions</div>
+              {% else %}
+                <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;color:var(--success)">🟢 ACTIVE</div>
+                <div style="font-size:.78rem;color:var(--muted)">No disruption today</div>
+              {% endif %}
+            </div>
+          </div>
+          <p class="w-msg">{{ weather.message }}</p>
+        </div>
 
-    <!-- File Claim -->
-    <div class="mt-6">
-      <div class="section-title">File a New Claim</div>
-      <div class="card" style="max-width:520px;">
-        <div class="form-group">
-          <label>Claim Type</label>
-          <select id="claim-type">
-            <option value="Medical Expense">Medical Expense</option>
-            <option value="Accident">Accident</option>
-            <option value="Property Damage">Property Damage</option>
-            <option value="Weather Damage">Weather Damage</option>
-            <option value="Disability">Disability</option>
-          </select>
+        <!-- Coverage summary card -->
+        <div class="cov-card fu fu3">
+          <h5 style="margin-bottom:1.1rem;font-size:1rem">Coverage Summary</h5>
+          <div class="info-row">
+            <span class="il">Policy Type</span>
+            <span class="iv">Parametric Income Protection</span>
+          </div>
+          <div class="info-row">
+            <span class="il">Trigger Condition</span>
+            <span class="iv">Heavy Rain / Extreme Weather</span>
+          </div>
+          <div class="info-row">
+            <span class="il">Payout Method</span>
+            <span class="iv">Direct UPI Transfer</span>
+          </div>
+          <div class="info-row">
+            <span class="il">Claim Process</span>
+            <span class="iv" style="color:var(--teal)">Automatic — No Forms</span>
+          </div>
+          <div class="info-row">
+            <span class="il">Weekly Coverage</span>
+            <span class="iv" style="color:var(--saffron)">₹{{ coverage.weekly_coverage }}</span>
+          </div>
+          <div class="info-row">
+            <span class="il">Data Stored In</span>
+            <span class="iv" style="color:var(--teal)">MySQL Database ✓</span>
+          </div>
+          <div class="info-row">
+            <span class="il">Insurance Status</span>
+            <span class="iv" style="color:var(--success)">✓ Active</span>
+          </div>
         </div>
-        <div class="form-group">
-          <label>Claim Amount (₹)</label>
-          <input type="number" id="claim-amount" placeholder="e.g. 15000">
-        </div>
-        <div class="form-group">
-          <label>Description</label>
-          <textarea id="claim-desc" rows="3" placeholder="Brief description of the incident..."></textarea>
-        </div>
-        <button class="btn btn-primary btn-full" onclick="fileClaim({{ worker.id }})">Submit Claim →</button>
-        <div id="claim-msg" style="margin-top:10px;font-size:.85rem;"></div>
-      </div>
-    </div>
 
-    {% endif %}
-    {% endif %}
+      </div>
+    </div><!-- /dash-grid -->
+
+    <!-- Refresh note -->
+    <p class="refresh-note">
+      🔄 Weather simulated by Python backend on every page load (Phase 1).
+      Phase 2 will use a live weather API. &nbsp;|&nbsp;
+      <a href="/dashboard/{{ worker.id }}">Refresh</a>
+    </p>
+
   </div>
-</main>
+</section>
 
+<!-- ── FOOTER ──────────────────────────────────────────────── -->
 <footer>
-  <div>AI Insurance Phase 1 &nbsp;·&nbsp; Built with Flask + MySQL &nbsp;·&nbsp; © 2024</div>
+  <div class="container">
+    <span class="brand-foot">GigShield</span> &nbsp;·&nbsp;
+    Worker Dashboard &nbsp;·&nbsp;
+    <span style="color:var(--teal)">Data from MySQL via Flask</span>
+  </div>
 </footer>
-
-<script>
-async function refreshPremium(workerId) {
-  const btn = event.target;
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spinner"></span> Calculating...';
-  try {
-    await fetch('/admin/recalculate', { method: 'POST' });
-    window.location.reload();
-  } catch(e) {
-    btn.disabled = false;
-    btn.textContent = '🔄 Recalculate with live weather';
-  }
-}
-
-async function fileClaim(workerId) {
-  const type   = document.getElementById('claim-type').value;
-  const amount = document.getElementById('claim-amount').value;
-  const desc   = document.getElementById('claim-desc').value;
-  const msg    = document.getElementById('claim-msg');
-  try {
-    const res = await fetch('/api/claim', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ worker_id: workerId, claim_type: type, amount: parseFloat(amount) || 0, description: desc })
-    });
-    const data = await res.json();
-    if (data.success) {
-      msg.innerHTML = '<span style="color:var(--accent)">✅ Claim #' + data.claim_id + ' submitted successfully.</span>';
-      setTimeout(() => window.location.reload(), 1500);
-    }
-  } catch(e) {
-    msg.innerHTML = '<span style="color:var(--danger)">❌ Failed to submit claim.</span>';
-  }
-}
-</script>
 
 </body>
 </html>
