@@ -1,238 +1,163 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Panel – AI Insurance</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Admin – GigShield</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
 </head>
 <body>
 
-<nav>
-  <div class="nav-brand">⚡ AI<span>Insurance</span></div>
-  <div class="nav-links">
-    <a href="{{ url_for('index') }}">Home</a>
-    <a href="{{ url_for('register') }}">Register</a>
-    <a href="{{ url_for('dashboard') }}">Dashboard</a>
-    <a href="{{ url_for('admin') }}" class="active">Admin</a>
+<!-- ── NAVBAR ─────────────────────────────────────────────── -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="/">Gig<span>Shield</span></a>
+    <div class="nav-links">
+      <a href="/" class="nav-link">Home</a>
+      <a href="/register" class="btn btn-primary btn-sm">+ Register Worker</a>
+    </div>
   </div>
 </nav>
 
-<main>
-  {% if locked %}
-  <!-- ── Lock Screen ────────────────────────── -->
-  <div class="lock-screen">
-    <div class="lock-icon">🔐</div>
-    <div class="lock-title">Admin Access</div>
-    <div class="lock-sub">Enter the administrator password to continue.</div>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% for cat, msg in messages %}
-        <div class="alert alert-{{ cat }}">{{ msg }}</div>
-      {% endfor %}
-    {% endwith %}
-    <form method="POST" action="{{ url_for('admin') }}">
-      <div class="form-group">
-        <input type="password" name="password" placeholder="Password" autofocus
-               style="text-align:center;font-size:1rem;padding:12px;">
+<!-- ── ADMIN CONTENT ──────────────────────────────────────── -->
+<section class="admin-page">
+  <div class="container">
+
+    <!-- Page heading -->
+    <div class="fu" style="margin-bottom:2.2rem;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+      <div>
+        <span class="label">Admin Panel</span>
+        <h2 class="section-title" style="margin-bottom:.3rem">Platform Overview</h2>
+        <p class="muted">
+          <span class="live-dot"></span>
+          All data pulled live from MySQL database via Flask.
+        </p>
       </div>
-      <button class="btn btn-primary btn-full" style="padding:12px;">Unlock →</button>
-    </form>
-    <div class="mt-4 text-muted" style="font-size:.78rem;">Default password: <code>admin123</code></div>
-  </div>
-
-  {% else %}
-  <!-- ── Admin Panel ────────────────────────── -->
-  <div class="container admin-page">
-
-    <div class="admin-header">
-      <div class="admin-title">Admin <span>Panel</span></div>
-      <div style="display:flex;gap:10px;align-items:center;">
-        <button class="btn btn-outline btn-sm" onclick="recalculateAll()">🔄 Recalculate All Premiums</button>
-        <a href="{{ url_for('admin_logout') }}" class="btn btn-danger btn-sm">Logout</a>
+      <div style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap">
+        <a href="/register" class="btn btn-outline btn-sm">+ Register Worker</a>
+        <a href="/admin" class="btn btn-outline btn-sm">🔄 Refresh</a>
       </div>
     </div>
 
-    <!-- Stats -->
-    <div class="grid-4 mb-6">
-      <div class="stat-card">
-        <div class="stat-label">Total Workers</div>
-        <div class="stat-value accent">{{ stats.total }}</div>
+    <!-- ── STAT CARDS ──────────────────────────────────────── -->
+    <div class="stat-cards">
+      <div class="stat-card fu fu1">
+        <span class="stat-big">{{ total_workers }}</span>
+        <span class="stat-sub">Total Workers</span>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Active</div>
-        <div class="stat-value">{{ stats.active }}</div>
+      <div class="stat-card fu fu2">
+        <span class="stat-big" style="color:var(--saffron)">₹{{ total_premium }}</span>
+        <span class="stat-sub">Weekly Revenue</span>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Pending</div>
-        <div class="stat-value" style="color:var(--warn)">{{ stats.pending }}</div>
+      <div class="stat-card fu fu3">
+        <span class="stat-big" style="color:var(--teal)">
+          ₹{{ (total_premium // total_workers) if total_workers > 0 else 0 }}
+        </span>
+        <span class="stat-sub">Avg Premium</span>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">High Risk</div>
-        <div class="stat-value" style="color:var(--danger)">{{ stats.high_risk }}</div>
+      <div class="stat-card fu fu4">
+        <span class="stat-big" style="color:var(--success)">Active</span>
+        <span class="stat-sub">Platform Status</span>
       </div>
     </div>
 
-    <div id="recalc-msg" style="margin-bottom:12px;font-size:.85rem;"></div>
+    <!-- ── WORKERS TABLE ───────────────────────────────────── -->
+    <div class="table-wrap fu fu2">
+      <div class="table-head">
+        <h5 style="margin:0;font-size:1rem">Registered Workers</h5>
+        <span class="muted" style="font-size:.82rem">{{ total_workers }} total</span>
+      </div>
 
-    <!-- Tabs -->
-    <div class="tab-bar">
-      <button class="tab-btn active" onclick="showTab('workers', this)">Workers ({{ stats.total }})</button>
-      <button class="tab-btn" onclick="showTab('claims', this)">Claims ({{ claims|length }})</button>
-    </div>
+      {% if workers %}
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>City</th>
+            <th>Platform</th>
+            <th>Daily Income</th>
+            <th>Weekly Premium</th>
+            <th>Registered At</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for w in workers %}
+          <tr>
+            <td style="color:var(--muted);font-size:.82rem">{{ loop.index }}</td>
 
-    <!-- Workers Tab -->
-    <div class="tab-content active" id="tab-workers">
-      <div class="card table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>Occupation</th>
-              <th>Region</th>
-              <th>Age</th>
-              <th>Risk</th>
-              <th>Premium / yr</th>
-              <th>Weather ×</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for w in workers %}
-            <tr id="row-{{ w.id }}">
-              <td class="text-muted">#{{ w.id }}</td>
-              <td>
-                <a href="{{ url_for('dashboard', worker_id=w.id) }}" style="color:var(--text);font-weight:600;">
-                  {{ w.full_name }}
-                </a>
-                <div style="font-size:.75rem;color:var(--muted);">{{ w.email }}</div>
-              </td>
-              <td>{{ w.occupation }}</td>
-              <td>{{ w.region }}</td>
-              <td>{{ w.age }}</td>
-              <td>
-                <span class="badge risk-{{ w.risk_level }}">{{ w.risk_level }}</span>
-              </td>
-              <td style="font-family:var(--font-head);font-weight:700;color:var(--accent);">
-                ₹{{ "{:,.0f}".format(w.final_premium) }}
-              </td>
-              <td class="text-muted">×{{ w.weather_factor }}</td>
-              <td>
-                <span class="badge badge-{{ w.status }}" id="status-{{ w.id }}">{{ w.status }}</span>
-              </td>
-              <td>
-                <div style="display:flex;gap:6px;">
-                  {% if w.status != 'active' %}
-                  <button class="btn btn-sm" style="background:rgba(0,229,160,.12);color:var(--accent);border:none;"
-                          onclick="setStatus({{ w.id }}, 'active')">Activate</button>
-                  {% endif %}
-                  {% if w.status != 'suspended' %}
-                  <button class="btn btn-sm btn-danger" onclick="setStatus({{ w.id }}, 'suspended')">Suspend</button>
-                  {% endif %}
+            <!-- Name with avatar -->
+            <td>
+              <div style="display:flex;align-items:center;gap:.6rem">
+                <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--saffron),var(--teal));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:.78rem;color:#0d1117;flex-shrink:0">
+                  {{ w.name[0].upper() }}
                 </div>
-              </td>
-            </tr>
-            {% else %}
-            <tr>
-              <td colspan="10" class="text-center text-muted" style="padding:32px;">No workers registered yet.</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
+                {{ w.name }}
+              </div>
+            </td>
 
-    <!-- Claims Tab -->
-    <div class="tab-content" id="tab-claims">
-      <div class="card table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Claim ID</th>
-              <th>Worker</th>
-              <th>Type</th>
-              <th>Amount</th>
-              <th>Status</th>
-              <th>Filed</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for c in claims %}
-            <tr>
-              <td class="text-muted">#{{ c.id }}</td>
-              <td>
-                <strong>{{ c.full_name }}</strong>
-                <div style="font-size:.75rem;color:var(--muted);">{{ c.occupation }}</div>
-              </td>
-              <td>{{ c.claim_type or '—' }}</td>
-              <td>{% if c.amount %}₹{{ "{:,.0f}".format(c.amount) }}{% else %}—{% endif %}</td>
-              <td>
-                <span class="badge {% if c.status == 'approved' %}badge-active{% elif c.status == 'rejected' %}badge-suspended{% else %}badge-pending{% endif %}">
-                  {{ c.status }}
-                </span>
-              </td>
-              <td class="text-muted">{{ c.filed_at.strftime('%d %b %Y') if c.filed_at else '—' }}</td>
-            </tr>
-            {% else %}
-            <tr>
-              <td colspan="6" class="text-center text-muted" style="padding:32px;">No claims yet.</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+            <td>{{ w.city }}</td>
+
+            <!-- Platform chip -->
+            <td><span class="chip-teal">{{ w.platform }}</span></td>
+
+            <td>₹{{ w.daily_income }}</td>
+
+            <!-- Premium chip -->
+            <td><span class="chip">₹{{ w.premium }}/wk</span></td>
+
+            <!-- Registered timestamp -->
+            <td style="font-size:.78rem;color:var(--muted)">
+              {{ w.registered_at.strftime('%d %b %Y, %I:%M %p') if w.registered_at else '–' }}
+            </td>
+
+            <!-- Actions -->
+            <td>
+              <div style="display:flex;gap:.4rem;align-items:center">
+                <a href="/dashboard/{{ w.id }}" class="btn btn-outline btn-sm">View →</a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      {% else %}
+      <!-- Empty state -->
+      <div class="empty-state">
+        <span class="ei">📋</span>
+        <p style="margin-bottom:.4rem;font-weight:600">No workers registered yet</p>
+        <p class="muted" style="font-size:.85rem">Register a worker — they will appear here instantly from MySQL.</p>
+        <a href="/register" class="btn btn-primary btn-sm" style="margin-top:1rem">+ Register First Worker</a>
+      </div>
+      {% endif %}
+
+    </div><!-- /table-wrap -->
+
+    <!-- ── PREMIUM TIER REFERENCE ──────────────────────────── -->
+    <div style="margin-top:1.4rem" class="fu">
+      <span class="label" style="margin-bottom:.6rem">Premium Tier Reference (Python Model)</span>
+      <div class="tier-ref">
+        <div class="tier-item">Income &lt; ₹800 → <span class="chip">₹20/wk</span> Basic</div>
+        <div class="tier-item">₹800 – ₹1200 → <span class="chip">₹30/wk</span> Standard</div>
+        <div class="tier-item">Income &gt; ₹1200 → <span class="chip">₹50/wk</span> Premium</div>
       </div>
     </div>
 
   </div>
-  {% endif %}
-</main>
+</section>
 
+<!-- ── FOOTER ──────────────────────────────────────────────── -->
 <footer>
-  <div>AI Insurance Phase 1 &nbsp;·&nbsp; Admin Interface &nbsp;·&nbsp; © 2024</div>
+  <div class="container">
+    <span class="brand-foot">GigShield</span> &nbsp;·&nbsp;
+    Admin Panel &nbsp;·&nbsp;
+    <span style="color:var(--teal)">MySQL + Flask</span>
+  </div>
 </footer>
-
-<script>
-function showTab(name, btn) {
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('tab-' + name).classList.add('active');
-  btn.classList.add('active');
-}
-
-async function setStatus(id, status) {
-  try {
-    const res = await fetch('/admin/update-status', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, status })
-    });
-    const data = await res.json();
-    if (data.success) {
-      const el = document.getElementById('status-' + id);
-      el.textContent = status;
-      el.className = 'badge badge-' + status;
-      // Reload to refresh action buttons
-      setTimeout(() => window.location.reload(), 600);
-    }
-  } catch(e) { alert('Failed to update status.'); }
-}
-
-async function recalculateAll() {
-  const msg = document.getElementById('recalc-msg');
-  msg.innerHTML = '<span class="spinner"></span> Recalculating all premiums with live weather...';
-  try {
-    const res = await fetch('/admin/recalculate', { method: 'POST' });
-    const data = await res.json();
-    if (data.success) {
-      msg.innerHTML = '<span style="color:var(--accent)">✅ Updated premiums for ' + data.updated + ' workers. Reloading...</span>';
-      setTimeout(() => window.location.reload(), 1200);
-    }
-  } catch(e) {
-    msg.innerHTML = '<span style="color:var(--danger)">❌ Failed to recalculate.</span>';
-  }
-}
-</script>
 
 </body>
 </html>
