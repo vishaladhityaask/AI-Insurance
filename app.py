@@ -1,233 +1,257 @@
 """
-app.py  –  AI Insurance Phase 1
-Main Flask server: routes, DB queries, API endpoints
+app.py
+------
+Flask REST API backend for GigShield – Phase 1.
+Serves gigshield.html as the frontend and exposes
+JSON API endpoints that the frontend calls via fetch().
+
+API Endpoints:
+  GET  /                      → serves gigshield.html
+  POST /api/register          → save worker to MySQL, return worker JSON
+  GET  /api/workers           → return all workers as JSON
+  GET  /api/worker/<id>       → return single worker as JSON
+  DELETE /api/worker/<id>     → delete a worker from MySQL
+  GET  /api/weather/<city>    → return simulated weather JSON
 """
 
-from flask import (
-    Flask, render_template, request,
-    jsonify, redirect, url_for, session, flash
-)
+from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
 import mysql.connector
 from mysql.connector import Error
-from insurance_model import calculate_premium, simulate_weather, recalculate_all_premiums
-from datetime import datetime
-import os
 
-app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "ai-insurance-dev-secret-2024")
+from insurance_model import calculate_premium, simulate_weather_risk, get_coverage_details
 
-# ─── DB Config ────────────────────────────────────────────────────────────────
-
-DB_CONFIG = {
-    "host":     os.environ.get("DB_HOST", "localhost"),
-    "user":     os.environ.get("DB_USER", "root"),
-    "password": os.environ.get("DB_PASSWORD", "Prithvi@2006"),
-    "database": os.environ.get("DB_NAME", "ai_insurance"),
-}
+# ---------------------------------------------------------------------------
+# App setup
+# ---------------------------------------------------------------------------
+app = Flask(__name__, static_folder=".")   # serve files from project root
+CORS(app)                                  # allow frontend fetch() calls
+app.secret_key = "gig_insurance_phase1_secret"
 
 
-def get_db():
-    """Return a fresh DB connection."""
+# ---------------------------------------------------------------------------
+# Database helper
+# ---------------------------------------------------------------------------
+def get_db_connection():
+    """Return a fresh MySQL connection. Edit password if needed."""
     try:
-        conn = mysql.connector.connect(**DB_CONFIG)
+        conn = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="mysql1234",          # ← change if your MySQL root has a password
+            database="gig_insurance",
+        )
         return conn
     except Error as e:
         print(f"[DB ERROR] {e}")
         return None
 
 
-def query(sql, params=(), fetchone=False, commit=False):
-    """Utility: run a query, return results or last row id."""
-    conn = get_db()
-    if not conn:
-        return None
-    try:
-        cur = conn.cursor(dictionary=True)
-        cur.execute(sql, params)
-        if commit:
-            conn.commit()
-            return cur.lastrowid
-        return cur.fetchone() if fetchone else cur.fetchall()
-    except Error as e:
-        print(f"[QUERY ERROR] {e}")
-        return None
-    finally:
-        conn.close()
-
-
-# ─── Public Routes ────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
+# Serve the frontend
+# ---------------------------------------------------------------------------
 
 @app.route("/")
 def index():
-    stats = {
-        "total_workers": (query("SELECT COUNT(*) AS c FROM workers", fetchone=True) or {}).get("c", 0),
-        "active_workers": (query("SELECT COUNT(*) AS c FROM workers WHERE status='active'", fetchone=True) or {}).get("c", 0),
-        "avg_premium": (query("SELECT ROUND(AVG(final_premium),2) AS c FROM workers", fetchone=True) or {}).get("c", 0),
-        "total_claims": (query("SELECT COUNT(*) AS c FROM claims", fetchone=True) or {}).get("c", 0),
+    """Serve gigshield.html as the main frontend page."""
+    return send_from_directory(".", "gigshield.html")
+
+
+# ---------------------------------------------------------------------------
+# API — Register a worker
+# ---------------------------------------------------------------------------
+
+@app.route("/api/register", methods=["POST"])
+def api_register():
+    """
+    POST /api/register
+    Body (JSON): { name, city, platform, daily_income }
+    Returns: { success, worker } or { success, error }
+    """
+    data = request.get_json()
+
+    # --- Validate input ---
+    name         = (data.get("name") or "").strip()
+    city         = (data.get("city") or "").strip()
+    platform     = (data.get("platform") or "").strip()
+    daily_income = data.get("daily_income")
+
+    if not all([name, city, platform, daily_income]):
+        return jsonify({"success": False, "error": "All fields are required."}), 400
+
+    try:
+        daily_income = int(daily_income)
+        if daily_income <= 0:
+            raise ValueError
+    except (ValueError, TypeError):
+        return jsonify({"success": False, "error": "Daily income must be a positive number."}), 400
+
+    # --- Calculate premium using Python model ---
+    premium  = calculate_premium(daily_income)
+    coverage = get_coverage_details(premium)
+
+    # --- Save to MySQL ---
+    conn = get_db_connection()
+    if conn is None:
+        return jsonify({"success": False, "error": "Database connection failed."}), 500
+
+    try:
+        cursor = conn.cursor()
+        sql = """
+            INSERT INTO workers (name, city, platform, daily_income, premium)
+            VALUES (%s, %s, %s, %s, %s)
+        """
+        cursor.execute(sql, (name, city, platform, daily_income, premium))
+        conn.commit()
+        worker_id = cursor.lastrowid
+    except Error as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
+
+    # --- Return worker data to frontend ---
+    worker = {
+        "id":           worker_id,
+        "name":         name,
+        "city":         city,
+        "platform":     platform,
+        "daily_income": daily_income,
+        "premium":      premium,
+        "plan":         coverage["description"].split("–")[0].strip(),
+        "coverage":     coverage["weekly_coverage"],
     }
-    weather_all = [simulate_weather(r) for r in
-                   ["North Zone", "South Zone", "East Zone", "West Zone", "Central Zone"]]
-    return render_template("index.html", stats=stats, weather_all=weather_all)
+    return jsonify({"success": True, "worker": worker}), 201
 
 
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    if request.method == "POST":
-        data = request.form
-        occupation = data.get("occupation", "").strip()
-        age        = int(data.get("age", 30))
-        region     = data.get("region", "Central Zone")
+# ---------------------------------------------------------------------------
+# API — Get all workers (for admin page)
+# ---------------------------------------------------------------------------
 
-        # Run AI premium calculation
-        result = calculate_premium(occupation, age, region)
+@app.route("/api/workers", methods=["GET"])
+def api_get_workers():
+    """
+    GET /api/workers
+    Returns: { success, workers: [...], total, total_premium, avg_premium }
+    """
+    conn = get_db_connection()
+    if conn is None:
+        return jsonify({"success": False, "error": "Database connection failed."}), 500
 
-        worker_id = query(
-            """INSERT INTO workers
-               (full_name, email, phone, occupation, age, region,
-                risk_level, base_premium, final_premium, weather_factor, status)
-               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,'pending')""",
-            (
-                data.get("full_name"), data.get("email"), data.get("phone"),
-                occupation, age, region,
-                result["risk_level"],
-                result["base_premium"],
-                result["final_premium"],
-                result["weather_factor"],
-            ),
-            commit=True
-        )
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM workers ORDER BY id DESC")
+        workers = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
 
-        session["last_registration"] = {
-            "id":            worker_id,
-            "name":          data.get("full_name"),
-            "premium":       result["final_premium"],
-            "risk_level":    result["risk_level"],
-            "weather":       result["weather"]["condition"],
-            "breakdown":     result["breakdown"],
-        }
-        return redirect(url_for("dashboard", worker_id=worker_id))
+    # Enrich each worker with plan and coverage from Python model
+    for w in workers:
+        cov = get_coverage_details(w["premium"])
+        w["plan"]     = cov["description"].split("–")[0].strip()
+        w["coverage"] = cov["weekly_coverage"]
+        # Convert datetime to string if present
+        if "registered_at" in w and w["registered_at"]:
+            w["registered_at"] = str(w["registered_at"])
 
-    return render_template("register.html")
+    total         = len(workers)
+    total_premium = sum(w["premium"] for w in workers)
+    avg_premium   = round(total_premium / total) if total else 0
 
-
-@app.route("/dashboard")
-@app.route("/dashboard/<int:worker_id>")
-def dashboard(worker_id=None):
-    worker = None
-    if worker_id:
-        worker = query("SELECT * FROM workers WHERE id=%s", (worker_id,), fetchone=True)
-    reg_info = session.pop("last_registration", None)
-    claims   = []
-    if worker:
-        claims = query("SELECT * FROM claims WHERE worker_id=%s ORDER BY filed_at DESC", (worker["id"],))
-    return render_template("dashboard.html", worker=worker, reg_info=reg_info, claims=claims or [])
+    return jsonify({
+        "success":       True,
+        "workers":       workers,
+        "total":         total,
+        "total_premium": total_premium,
+        "avg_premium":   avg_premium,
+    })
 
 
-# ─── Admin Routes ─────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
+# API — Get single worker (for dashboard)
+# ---------------------------------------------------------------------------
 
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
+@app.route("/api/worker/<int:worker_id>", methods=["GET"])
+def api_get_worker(worker_id):
+    """
+    GET /api/worker/<id>
+    Returns: { success, worker } or { success, error }
+    """
+    conn = get_db_connection()
+    if conn is None:
+        return jsonify({"success": False, "error": "Database connection failed."}), 500
 
+    try:
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM workers WHERE id = %s", (worker_id,))
+        worker = cursor.fetchone()
+    finally:
+        cursor.close()
+        conn.close()
 
-@app.route("/admin", methods=["GET", "POST"])
-def admin():
-    if request.method == "POST" and not session.get("admin"):
-        if request.form.get("password") == ADMIN_PASSWORD:
-            session["admin"] = True
-        else:
-            flash("Invalid password", "error")
-            return redirect(url_for("admin"))
+    if not worker:
+        return jsonify({"success": False, "error": "Worker not found."}), 404
 
-    if not session.get("admin"):
-        return render_template("admin.html", locked=True)
+    cov = get_coverage_details(worker["premium"])
+    worker["plan"]     = cov["description"].split("–")[0].strip()
+    worker["coverage"] = cov["weekly_coverage"]
+    if "registered_at" in worker and worker["registered_at"]:
+        worker["registered_at"] = str(worker["registered_at"])
 
-    workers  = query("SELECT * FROM workers ORDER BY registered_at DESC") or []
-    claims   = query("""
-        SELECT c.*, w.full_name, w.occupation
-        FROM claims c JOIN workers w ON c.worker_id=w.id
-        ORDER BY c.filed_at DESC LIMIT 50
-    """) or []
-    stats = {
-        "total":     len(workers),
-        "active":    sum(1 for w in workers if w["status"] == "active"),
-        "pending":   sum(1 for w in workers if w["status"] == "pending"),
-        "high_risk": sum(1 for w in workers if w["risk_level"] == "high"),
-        "avg_prem":  round(sum(w["final_premium"] for w in workers) / len(workers), 2) if workers else 0,
-    }
-    return render_template("admin.html", locked=False, workers=workers, claims=claims, stats=stats)
-
-
-@app.route("/admin/logout")
-def admin_logout():
-    session.pop("admin", None)
-    return redirect(url_for("admin"))
+    return jsonify({"success": True, "worker": worker})
 
 
-@app.route("/admin/update-status", methods=["POST"])
-def update_status():
-    if not session.get("admin"):
-        return jsonify({"error": "Unauthorized"}), 401
-    wid    = request.json.get("id")
-    status = request.json.get("status")
-    query("UPDATE workers SET status=%s WHERE id=%s", (status, wid), commit=True)
+# ---------------------------------------------------------------------------
+# API — Delete a worker (admin action)
+# ---------------------------------------------------------------------------
+
+@app.route("/api/worker/<int:worker_id>", methods=["DELETE"])
+def api_delete_worker(worker_id):
+    """
+    DELETE /api/worker/<id>
+    Returns: { success } or { success, error }
+    """
+    conn = get_db_connection()
+    if conn is None:
+        return jsonify({"success": False, "error": "Database connection failed."}), 500
+
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM workers WHERE id = %s", (worker_id,))
+        conn.commit()
+        affected = cursor.rowcount
+    finally:
+        cursor.close()
+        conn.close()
+
+    if affected == 0:
+        return jsonify({"success": False, "error": "Worker not found."}), 404
+
     return jsonify({"success": True})
 
 
-@app.route("/admin/recalculate", methods=["POST"])
-def recalculate():
-    if not session.get("admin"):
-        return jsonify({"error": "Unauthorized"}), 401
-    workers = query("SELECT id, occupation, age, region FROM workers") or []
-    updates = recalculate_all_premiums(workers)
-    for u in updates:
-        query(
-            "UPDATE workers SET final_premium=%s, weather_factor=%s, risk_level=%s WHERE id=%s",
-            (u["final_premium"], u["weather_factor"], u["risk_level"], u["id"]),
-            commit=True
-        )
-    return jsonify({"success": True, "updated": len(updates)})
+# ---------------------------------------------------------------------------
+# API — Weather simulation (calls Python insurance_model.py)
+# ---------------------------------------------------------------------------
+
+@app.route("/api/weather/<city>", methods=["GET"])
+def api_weather(city):
+    """
+    GET /api/weather/<city>
+    Returns simulated weather risk from insurance_model.py
+    """
+    weather = simulate_weather_risk(city)
+    return jsonify({"success": True, "weather": weather})
 
 
-# ─── JSON API ─────────────────────────────────────────────────────────────────
-
-@app.route("/api/calculate-premium", methods=["POST"])
-def api_calculate():
-    d = request.json or {}
-    try:
-        result = calculate_premium(
-            d.get("occupation", "office worker"),
-            int(d.get("age", 30)),
-            d.get("region", "Central Zone"),
-        )
-        return jsonify(result)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
-
-
-@app.route("/api/weather/<region>")
-def api_weather(region):
-    return jsonify(simulate_weather(region))
-
-
-@app.route("/api/workers")
-def api_workers():
-    if not session.get("admin"):
-        return jsonify({"error": "Unauthorized"}), 401
-    workers = query("SELECT * FROM workers ORDER BY registered_at DESC") or []
-    return jsonify(workers)
-
-
-@app.route("/api/claim", methods=["POST"])
-def file_claim():
-    d = request.json or {}
-    claim_id = query(
-        "INSERT INTO claims (worker_id, claim_type, amount, description) VALUES (%s,%s,%s,%s)",
-        (d.get("worker_id"), d.get("claim_type"), d.get("amount"), d.get("description")),
-        commit=True
-    )
-    return jsonify({"success": True, "claim_id": claim_id})
-
-
-# ─── Run ──────────────────────────────────────────────────────────────────────
-
+# ---------------------------------------------------------------------------
+# Entry-point
+# ---------------------------------------------------------------------------
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    print("=" * 60)
+    print("  GigShield – AI Parametric Insurance Platform")
+    print("  Frontend : http://127.0.0.1:5000")
+    print("  API Base : http://127.0.0.1:5000/api")
+    print("=" * 60)
+    app.run(debug=True)
