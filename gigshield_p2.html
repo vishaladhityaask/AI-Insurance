@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>GigShield Phase 2 — AI Parametric Insurance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+/* ── Variables ──────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080c12;--surface:#0f1520;--surface2:#172030;--surface3:#1e2a3e;
+  --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.1);
+  --saffron:#ff9933;--saffron2:#ffb366;--saffron3:rgba(255,153,51,0.15);
+  --teal:#00d4c8;--teal2:rgba(0,212,200,0.12);
+  --blue:#3b82f6;--blue2:rgba(59,130,246,0.12);
+  --text:#e8edf5;--muted:#6b7a99;--muted2:#4a5568;
+  --danger:#ff4757;--warn:#ffa502;--success:#2ed573;
+  --r:16px;--r2:10px;--r3:8px;
+  --glow-s:0 0 40px rgba(255,153,51,0.12);
+  --shadow:0 8px 32px rgba(0,0,0,0.6);
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);line-height:1.65;overflow-x:hidden;min-height:100vh}
+h1,h2,h3,h4,h5,h6{font-family:'Syne',sans-serif;font-weight:700;letter-spacing:-.025em}
+a{color:var(--saffron);text-decoration:none}
+button,input,select{font-family:'DM Sans',sans-serif}
+
+/* ── Pages ───────────────────────────────────────────────── */
+.page{display:none;animation:pageIn .45s ease}
+.page.active{display:block}
+@keyframes pageIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes up{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.7)}}
+@keyframes flash{0%{background:rgba(255,153,51,.25)}100%{background:transparent}}
+@keyframes glow{0%,100%{box-shadow:0 0 20px rgba(255,153,51,.2)}50%{box-shadow:0 0 40px rgba(255,153,51,.45)}}
+@keyframes countUp{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+@keyframes slideRight{from{width:0}to{width:var(--w)}}
+
+.fu{animation:up .6s ease both}
+.fu1{animation-delay:.08s}.fu2{animation-delay:.18s}.fu3{animation-delay:.28s}.fu4{animation-delay:.38s}.fu5{animation-delay:.48s}
+
+/* ── Nav ─────────────────────────────────────────────────── */
+.nav{position:sticky;top:0;z-index:200;background:rgba(8,12,18,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:.85rem 0}
+.nav-inner{max-width:1180px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;gap:1rem}
+.brand{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;color:var(--saffron);border:none;background:none;cursor:pointer;letter-spacing:-.02em;flex-shrink:0}
+.brand span{color:var(--teal)}
+.phase-badge{background:rgba(0,212,200,.12);border:1px solid rgba(0,212,200,.25);color:var(--teal);font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.22rem .7rem;border-radius:50px;flex-shrink:0}
+.nav-links{margin-left:auto;display:flex;align-items:center;gap:.5rem}
+.nav-btn{color:var(--muted);font-size:.88rem;font-weight:500;cursor:pointer;background:none;border:none;padding:.4rem .75rem;border-radius:var(--r3);transition:color .2s,background .2s}
+.nav-btn:hover{color:var(--text);background:var(--surface2)}
+.nav-btn.active-nav{color:var(--saffron)}
+
+/* ── Buttons ─────────────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;font-family:'Syne',sans-serif;font-weight:700;font-size:.9rem;padding:.7rem 1.75rem;border-radius:var(--r2);border:none;cursor:pointer;transition:all .2s;line-height:1;white-space:nowrap}
+.btn-p{background:var(--saffron);color:#080c12}
+.btn-p:hover:not(:disabled){background:var(--saffron2);transform:translateY(-2px);box-shadow:0 10px 28px rgba(255,153,51,.4)}
+.btn-p:disabled{opacity:.5;cursor:not-allowed}
+.btn-t{background:transparent;color:var(--teal);border:1.5px solid var(--teal)}
+.btn-t:hover{background:var(--teal2)}
+.btn-g{background:var(--surface2);color:var(--text);border:1px solid var(--border2)}
+.btn-g:hover{background:var(--surface3)}
+.btn-danger{background:rgba(255,71,87,.15);color:var(--danger);border:1px solid rgba(255,71,87,.3)}
+.btn-danger:hover{background:rgba(255,71,87,.25)}
+.btn-sm{padding:.38rem .9rem;font-size:.8rem}
+.btn-xs{padding:.25rem .65rem;font-size:.74rem}
+.btn-del{background:rgba(255,71,87,.1);color:var(--danger);border:1px solid rgba(255,71,87,.2);border-radius:var(--r3);padding:.28rem .65rem;font-size:.78rem;cursor:pointer;transition:background .2s;line-height:1}
+.btn-del:hover{background:rgba(255,71,87,.22)}
+
+/* ── Layout ──────────────────────────────────────────────── */
+.wrap{max-width:1180px;margin:0 auto;padding:0 1.5rem}
+.sec{padding:72px 0}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start}
+.g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.1rem}
+.g4{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem}
+@media(max-width:820px){.g2{grid-template-columns:1fr}}
+
+/* ── Cards ───────────────────────────────────────────────── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.6rem;transition:border-color .25s,transform .25s}
+.card:hover{border-color:rgba(255,153,51,.2);transform:translateY(-3px)}
+.card-flat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.6rem}
+
+/* ── Typography helpers ──────────────────────────────────── */
+.label{font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);display:block;margin-bottom:.45rem}
+.sec-title{font-size:clamp(1.7rem,3.5vw,2.6rem);margin-bottom:1rem}
+.muted{color:var(--muted)}
+.accent{color:var(--saffron)}.accent2{color:var(--teal)}
+hr.div{border:none;border-top:1px solid var(--border);margin:1rem 0}
+
+/* ── DB bar ──────────────────────────────────────────────── */
+.db-bar{padding:.45rem 0;text-align:center;font-size:.78rem;font-weight:500}
+.db-bar.ok{background:rgba(0,212,200,.08);border-bottom:1px solid rgba(0,212,200,.18);color:var(--teal)}
+.db-bar.err{background:rgba(255,71,87,.08);border-bottom:1px solid rgba(255,71,87,.18);color:var(--danger)}
+.db-bar.loading{background:rgba(255,153,51,.06);border-bottom:1px solid rgba(255,153,51,.14);color:var(--saffron)}
+
+/* ── Toast ───────────────────────────────────────────────── */
+.toast{position:fixed;top:72px;right:1.5rem;z-index:9999;padding:.85rem 1.4rem;border-radius:var(--r2);font-size:.9rem;font-weight:500;border:1px solid;max-width:380px;box-shadow:var(--shadow);animation:slideIn .3s ease}
+@keyframes slideIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
+.toast.ok{background:rgba(46,213,115,.1);border-color:rgba(46,213,115,.3);color:var(--success)}
+.toast.err{background:rgba(255,71,87,.1);border-color:rgba(255,71,87,.3);color:var(--danger)}
+.toast.info{background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.3);color:var(--blue)}
+
+/* ── Spinner ─────────────────────────────────────────────── */
+.spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,153,51,.3);border-top-color:var(--saffron);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:.4rem}
+
+/* ── Info rows ───────────────────────────────────────────── */
+.irow{display:flex;justify-content:space-between;align-items:center;padding:.6rem 0;border-bottom:1px solid var(--border);font-size:.9rem}
+.irow:last-child{border-bottom:none}
+.il{color:var(--muted)}.iv{font-weight:500}
+
+/* ── Chips ───────────────────────────────────────────────── */
+.chip-s{background:rgba(255,153,51,.15);color:var(--saffron);border-radius:50px;padding:.18rem .72rem;font-size:.78rem;font-weight:700;white-space:nowrap}
+.chip-t{background:rgba(0,212,200,.1);color:var(--teal);border-radius:5px;padding:.15rem .6rem;font-size:.78rem;white-space:nowrap}
+.chip-g{background:rgba(46,213,115,.1);color:var(--success);border-radius:5px;padding:.15rem .6rem;font-size:.78rem;font-weight:600}
+.chip-r{background:rgba(255,71,87,.1);color:var(--danger);border-radius:5px;padding:.15rem .6rem;font-size:.78rem;font-weight:600}
+.chip-b{background:rgba(59,130,246,.1);color:var(--blue);border-radius:5px;padding:.15rem .6rem;font-size:.78rem;font-weight:600}
+
+/* ── Live dot ────────────────────────────────────────────── */
+.ldot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--success);margin-right:.4rem;animation:pulse 1.4s infinite;vertical-align:middle}
+
+/* ── New row flash ───────────────────────────────────────── */
+.new-row{animation:flash 2.5s ease forwards}
+
+/* ════════════════════════════════════════════════════════════
+   PAGE 1 — LANDING
+════════════════════════════════════════════════════════════ */
+.hero{position:relative;padding:100px 0 80px;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 70% 60% at 75% 35%,rgba(255,153,51,.08) 0%,transparent 65%),
+    radial-gradient(ellipse 60% 70% at 10% 75%,rgba(0,212,200,.06) 0%,transparent 65%),
+    radial-gradient(ellipse 40% 40% at 50% 50%,rgba(59,130,246,.04) 0%,transparent 60%)}
+.hero-badge{display:inline-flex;align-items:center;gap:.4rem;background:rgba(255,153,51,.1);border:1px solid rgba(255,153,51,.25);color:var(--saffron);font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.32rem .9rem;border-radius:50px;margin-bottom:1.4rem}
+.hero-title{font-size:clamp(2.4rem,5.5vw,4.2rem);font-weight:800;line-height:1.08;margin-bottom:1.2rem}
+.hero-sub{font-size:1.08rem;color:var(--muted);max-width:500px;margin-bottom:2.5rem;font-weight:300}
+.hero-btns{display:flex;gap:1rem;flex-wrap:wrap}
+
+/* Phase 2 feature pills */
+.feat-pills{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:2rem}
+.feat-pill{background:var(--surface2);border:1px solid var(--border);border-radius:50px;padding:.3rem .9rem;font-size:.78rem;color:var(--muted);display:flex;align-items:center;gap:.4rem}
+.feat-pill span{color:var(--saffron);font-weight:600}
+
+/* Stats */
+.stats-bar{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:2.2rem 0}
+.stats-g{display:grid;grid-template-columns:repeat(5,1fr);gap:1rem;text-align:center}
+@media(max-width:700px){.stats-g{grid-template-columns:repeat(3,1fr)}}
+.snum{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--saffron);display:block}
+.slbl{font-size:.78rem;color:var(--muted)}
+
+/* Step */
+.snum-badge{width:40px;height:40px;border-radius:50%;flex-shrink:0;background:rgba(255,153,51,.1);border:1px solid rgba(255,153,51,.25);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;color:var(--saffron)}
+
+/* Trigger cards */
+.trigger-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.2rem;transition:all .25s;cursor:default}
+.trigger-card:hover{border-color:rgba(255,153,51,.3);transform:translateY(-2px)}
+.t-icon{font-size:2rem;margin-bottom:.6rem;display:block}
+.t-title{font-size:.95rem;font-weight:600;margin-bottom:.3rem}
+.t-desc{font-size:.8rem;color:var(--muted)}
+
+/* ════════════════════════════════════════════════════════════
+   PAGE 2 — REGISTER
+════════════════════════════════════════════════════════════ */
+.reg-page{min-height:calc(100vh - 100px);display:flex;align-items:flex-start;padding:50px 0 80px}
+.reg-grid{display:grid;grid-template-columns:1fr 420px;gap:2rem;align-items:start}
+@media(max-width:900px){.reg-grid{grid-template-columns:1fr}}
+.form-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:2.4rem 2.6rem;box-shadow:var(--shadow),var(--glow-s)}
+@media(max-width:600px){.form-card{padding:1.7rem 1.4rem}}
+.field{margin-bottom:1rem}
+.field label{display:block;font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:.38rem;letter-spacing:.04em}
+.field input,.field select{width:100%;background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:var(--r2);padding:.7rem 1rem;font-size:.94rem;outline:none;transition:border-color .2s,box-shadow .2s;appearance:none}
+.field input:focus,.field select:focus{border-color:var(--saffron);box-shadow:0 0 0 3px rgba(255,153,51,.12)}
+.field input::placeholder{color:var(--muted2)}
+.field select option{background:var(--surface2);color:var(--text)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+
+/* ML Pricing panel */
+.pricing-panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.4rem;position:sticky;top:80px}
+.pricing-loading{text-align:center;padding:2rem;color:var(--muted);font-size:.88rem}
+.pricing-breakdown{display:flex;flex-direction:column;gap:.5rem}
+.pb-row{display:flex;justify-content:space-between;font-size:.85rem;padding:.35rem 0;border-bottom:1px solid var(--border)}
+.pb-row:last-child{border-bottom:none;font-weight:700;font-size:.95rem}
+.pb-label{color:var(--muted)}
+.pb-val{font-weight:500}
+.final-premium{text-align:center;margin:1rem 0;padding:1rem;background:var(--saffron3);border:1px solid rgba(255,153,51,.3);border-radius:var(--r2);animation:glow 2s infinite}
+.fp-amt{font-family:'Syne',sans-serif;font-size:2.8rem;font-weight:800;color:var(--saffron);display:block;line-height:1}
+.fp-lbl{font-size:.8rem;color:var(--muted);margin-top:.2rem}
+.risk-meter{margin-top:.8rem}
+.rm-label{font-size:.74rem;color:var(--muted);margin-bottom:.35rem;display:flex;justify-content:space-between}
+.rm-bar{height:6px;background:var(--surface3);border-radius:3px;overflow:hidden}
+.rm-fill{height:100%;border-radius:3px;transition:width .5s ease}
+.savings-badge{background:rgba(46,213,115,.1);border:1px solid rgba(46,213,115,.25);border-radius:var(--r2);padding:.5rem .8rem;text-align:center;font-size:.8rem;color:var(--success);margin-top:.7rem}
+
+/* ════════════════════════════════════════════════════════════
+   PAGE 3 — DASHBOARD
+════════════════════════════════════════════════════════════ */
+.dash-page{padding:50px 0 80px}
+.dash-grid{display:grid;grid-template-columns:360px 1fr;gap:1.4rem}
+@media(max-width:960px){.dash-grid{grid-template-columns:1fr}}
+.avatar{width:64px;height:64px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,var(--saffron),var(--teal));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:#080c12}
+.premium-block{background:linear-gradient(135deg,rgba(255,153,51,.16),rgba(255,153,51,.03));border:1px solid rgba(255,153,51,.3);border-radius:var(--r);padding:1.5rem;text-align:center;margin-top:1rem;animation:glow 3s infinite}
+.p-amt{font-family:'Syne',sans-serif;font-size:3rem;font-weight:800;color:var(--saffron);line-height:1;display:block}
+.p-lbl{font-size:.8rem;color:var(--muted);margin-top:.25rem}
+
+/* Disruption monitor */
+.disrupt-card{border-radius:var(--r);padding:1.5rem;border:1px solid var(--border);margin-bottom:1rem;transition:all .4s}
+.disrupt-card.high{background:rgba(255,71,87,.07);border-color:rgba(255,71,87,.3)}
+.disrupt-card.medium{background:rgba(255,165,2,.07);border-color:rgba(255,165,2,.3)}
+.disrupt-card.low{background:rgba(46,213,115,.06);border-color:rgba(46,213,115,.25)}
+.d-top{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.d-icon{font-size:2.8rem;line-height:1}
+.d-pill{display:inline-block;padding:.22rem .8rem;border-radius:50px;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-top:.3rem}
+.d-pill.high{background:rgba(255,71,87,.2);color:var(--danger)}
+.d-pill.medium{background:rgba(255,165,2,.2);color:var(--warn)}
+.d-pill.low{background:rgba(46,213,115,.18);color:var(--success)}
+.d-msg{font-size:.87rem;margin-top:.9rem;opacity:.88;line-height:1.6}
+
+/* Active triggers list */
+.trigger-list{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.75rem}
+.t-tag{background:rgba(255,71,87,.12);border:1px solid rgba(255,71,87,.25);color:var(--danger);border-radius:50px;padding:.18rem .7rem;font-size:.74rem;font-weight:600}
+
+/* Claim button */
+.claim-section{margin-top:1rem;padding:1.2rem;background:var(--surface2);border-radius:var(--r2);border:1px solid var(--border)}
+
+/* ════════════════════════════════════════════════════════════
+   PAGE 4 — POLICY
+════════════════════════════════════════════════════════════ */
+.policy-page{padding:50px 0 80px}
+.policy-header{background:linear-gradient(135deg,var(--surface),var(--surface2));border:1px solid var(--border);border-radius:var(--r);padding:2rem;margin-bottom:1.5rem;position:relative;overflow:hidden}
+.policy-header::before{content:'';position:absolute;top:-30px;right:-30px;width:150px;height:150px;background:radial-gradient(circle,rgba(255,153,51,.1),transparent 70%)}
+.policy-num{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:var(--saffron)}
+.policy-status{display:inline-flex;align-items:center;gap:.4rem;background:rgba(46,213,115,.12);border:1px solid rgba(46,213,115,.25);color:var(--success);font-size:.78rem;font-weight:700;padding:.3rem .8rem;border-radius:50px}
+.trigger-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.85rem;margin-top:1rem}
+.trigger-item{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r2);padding:1rem;display:flex;align-items:flex-start;gap:.75rem}
+.ti-icon{font-size:1.6rem;flex-shrink:0}
+.ti-label{font-size:.85rem;font-weight:600;margin-bottom:.15rem}
+.ti-threshold{font-size:.75rem;color:var(--muted)}
+
+/* ════════════════════════════════════════════════════════════
+   PAGE 5 — CLAIMS
+════════════════════════════════════════════════════════════ */
+.claims-page{padding:50px 0 80px}
+.claim-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.4rem;margin-bottom:.85rem;transition:border-color .2s}
+.claim-card:hover{border-color:rgba(255,153,51,.2)}
+.claim-header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.75rem;margin-bottom:.85rem}
+.claim-id{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;color:var(--saffron)}
+.claim-amount{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:var(--success)}
+.payout-bar{margin-top:.75rem}
+.pb-label-row{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);margin-bottom:.3rem}
+.pb-track{height:5px;background:var(--surface3);border-radius:3px;overflow:hidden}
+.pb-fill{height:100%;background:linear-gradient(90deg,var(--saffron),var(--saffron2));border-radius:3px;transition:width .6s ease}
+
+/* Zero-touch banner */
+.zt-banner{background:linear-gradient(135deg,rgba(46,213,115,.1),rgba(0,212,200,.08));border:1px solid rgba(46,213,115,.2);border-radius:var(--r);padding:1.4rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.zt-icon{font-size:2.5rem;flex-shrink:0}
+.zt-title{font-family:'Syne',sans-serif;font-weight:700;font-size:1.1rem;margin-bottom:.2rem}
+.zt-desc{font-size:.85rem;color:var(--muted)}
+
+/* ════════════════════════════════════════════════════════════
+   PAGE 6 — ADMIN
+════════════════════════════════════════════════════════════ */
+.admin-page{padding:50px 0 80px}
+.admin-stat{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem}
+@media(max-width:780px){.admin-stat{grid-template-columns:repeat(2,1fr)}}
+.as-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.3rem;text-align:center}
+.as-big{font-family:'Syne',sans-serif;font-size:2.3rem;font-weight:800;display:block;line-height:1.1;animation:countUp .5s ease}
+.as-lbl{font-size:.78rem;color:var(--muted);margin-top:.2rem;display:block}
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.t-head{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.4rem;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:.75rem}
+table{width:100%;border-collapse:collapse}
+thead th{background:var(--surface2);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;padding:.75rem 1rem;text-align:left;white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);transition:background .15s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(255,255,255,.018)}
+tbody td{padding:.8rem 1rem;font-size:.88rem;vertical-align:middle}
+.empty-s{text-align:center;padding:3.5rem;color:var(--muted)}
+.empty-s .ei{font-size:2.8rem;margin-bottom:.9rem;display:block}
+.tier-ref{display:flex;gap:.65rem;flex-wrap:wrap;margin-top:1.2rem}
+.tier-i{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:.48rem .95rem;font-size:.8rem}
+
+/* Footer */
+footer{border-top:1px solid var(--border);padding:1.5rem 0;text-align:center;font-size:.8rem;color:var(--muted)}
+.bf{font-family:'Syne',sans-serif;font-weight:700;color:var(--saffron)}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- DB BAR -->
+<div class="db-bar loading" id="db-bar"><span class="spin"></span> Connecting to GigShield backend…</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-inner">
+    <button class="brand" onclick="go('home')">Gig<span>Shield</span></button>
+    <span class="phase-badge">Phase 2</span>
+    <div class="nav-links">
+      <button class="nav-btn" onclick="go('home')">Home</button>
+      <button class="nav-btn" onclick="go('register')">Register</button>
+      <button class="nav-btn" onclick="go('policy')" id="nav-policy" style="display:none">Policy</button>
+      <button class="nav-btn" onclick="go('claims')" id="nav-claims" style="display:none">Claims</button>
+      <button class="nav-btn" onclick="go('admin')">
+        Admin
+        <span id="nav-badge" style="display:inline-flex;align-items:center;justify-content:center;background:var(--saffron);color:#080c12;font-family:'Syne',sans-serif;font-weight:800;font-size:.64rem;width:18px;height:18px;border-radius:50%;margin-left:.3rem;vertical-align:middle;line-height:1">0</span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div id="toast" class="toast" style="display:none"></div>
+
+<!-- ══════════════════ PAGE 1 — HOME ══════════════════════ -->
+<div id="page-home" class="page active">
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="wrap">
+      <div class="g2">
+        <div class="fu">
+          <div class="hero-badge">🚀 Phase 2 &nbsp;·&nbsp; Automation &amp; Protection</div>
+          <h1 class="hero-title">
+            <span class="accent">AI-Powered</span><br>
+            Income Protection<br>
+            for Every Rider
+          </h1>
+          <p class="hero-sub">Dynamic ML pricing. Zero-touch claims. 5 automated disruption triggers. Your income is protected the moment the weather turns.</p>
+          <div class="hero-btns">
+            <button class="btn btn-p" onclick="go('register')">Get Protected Now →</button>
+            <button class="btn btn-t" onclick="go('admin')">View Admin Panel</button>
+          </div>
+          <div class="feat-pills">
+            <div class="feat-pill">🤖 <span>ML Dynamic Pricing</span></div>
+            <div class="feat-pill">🌧️ <span>5 Auto Triggers</span></div>
+            <div class="feat-pill">⚡ <span>Zero-Touch Claims</span></div>
+            <div class="feat-pill">📋 <span>Policy Management</span></div>
+            <div class="feat-pill">💸 <span>UPI Auto Payout</span></div>
+          </div>
+        </div>
+        <!-- Right: live trigger monitor -->
+        <div class="fu fu2">
+          <div class="card-flat" style="border-color:rgba(255,153,51,.2)">
+            <div class="label">Live Trigger Monitor</div>
+            <div id="home-trigger-display" style="text-align:center;padding:1rem 0">
+              <div style="font-size:3rem">🌧️</div>
+              <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.2rem;margin:.5rem 0">Heavy Rain</div>
+              <span class="d-pill high">High Risk</span>
+              <p class="muted" style="font-size:.85rem;margin-top:.75rem">Trigger: Rainfall > 50mm/hr</p>
+            </div>
+            <hr class="div"/>
+            <div class="irow"><span class="il">Workers Protected</span><span class="iv" id="home-workers">–</span></div>
+            <div class="irow"><span class="il">Claims This Week</span><span class="iv" style="color:var(--success)">Auto-Approved ✓</span></div>
+            <div class="irow"><span class="il">Avg Premium</span><span class="iv" id="home-avg">–</span></div>
+            <div class="irow"><span class="il">ML Pricing</span><span class="iv" style="color:var(--teal)">Active ✓</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <div class="stats-bar">
+    <div class="wrap">
+      <div class="stats-g">
+        <div class="fu fu1"><span class="snum">12M+</span><span class="slbl">Gig Workers in India</span></div>
+        <div class="fu fu2"><span class="snum">5</span><span class="slbl">Automated Triggers</span></div>
+        <div class="fu fu3"><span class="snum">₹0</span><span class="slbl">Manual Claim Effort</span></div>
+        <div class="fu fu4"><span class="snum">&lt;2hr</span><span class="slbl">Payout SLA</span></div>
+        <div class="fu fu5"><span class="snum">₹20</span><span class="slbl">Starting Premium/Week</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5 Triggers -->
+  <section class="sec">
+    <div class="wrap">
+      <div style="text-align:center;margin-bottom:2.5rem">
+        <span class="label">Automated Disruption Triggers</span>
+        <h2 class="sec-title">5 Triggers. All Automatic.</h2>
+        <p class="muted" style="max-width:500px;margin:0 auto">No human intervention. When any of these conditions fire — your claim is approved and payout begins within 2 hours.</p>
+      </div>
+      <div class="g3" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+        <div class="trigger-card fu fu1"><span class="t-icon">🌧️</span><div class="t-title">Heavy Rain</div><div class="t-desc">Rainfall &gt; 50mm/hr — 100% coverage triggered</div></div>
+        <div class="trigger-card fu fu2"><span class="t-icon">🌀</span><div class="t-title">Storm / Cyclone</div><div class="t-desc">Wind speed &gt; 60 km/h — 100% coverage triggered</div></div>
+        <div class="trigger-card fu fu3"><span class="t-icon">🌊</span><div class="t-title">Waterlogging</div><div class="t-desc">Zone flood advisory — 80% coverage triggered</div></div>
+        <div class="trigger-card fu fu4"><span class="t-icon">🌡️</span><div class="t-title">Extreme Heat</div><div class="t-desc">Temperature &gt; 45°C — 60% coverage triggered</div></div>
+        <div class="trigger-card fu fu5"><span class="t-icon">😷</span><div class="t-title">Poor Air Quality</div><div class="t-desc">AQI &gt; 300 — 50% coverage triggered</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ML Pricing -->
+  <section class="sec" style="background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+    <div class="wrap">
+      <div class="g2">
+        <div class="fu">
+          <span class="label">ML Dynamic Pricing</span>
+          <h2 class="sec-title">Your Premium. Calculated by AI.</h2>
+          <p class="muted" style="margin-bottom:1.5rem">Our machine learning model considers 5 factors to price your premium fairly — not one flat rate for everyone.</p>
+          <div style="display:flex;flex-direction:column;gap:.75rem">
+            <div class="card-flat"><div style="display:flex;justify-content:space-between;align-items:center"><span>📍 Zone Safety Discount</span><span style="color:var(--success);font-weight:600">Up to ₹4 off</span></div><div class="muted" style="font-size:.82rem;margin-top:.25rem">Historically safe zones get lower premiums</div></div>
+            <div class="card-flat"><div style="display:flex;justify-content:space-between;align-items:center"><span>🏍️ Platform Multiplier</span><span style="color:var(--warn);font-weight:600">1.00× – 1.08×</span></div><div class="muted" style="font-size:.82rem;margin-top:.25rem">Higher-risk platform operations cost slightly more</div></div>
+            <div class="card-flat"><div style="display:flex;justify-content:space-between;align-items:center"><span>⏰ Hours Adjustment</span><span style="color:var(--blue);font-weight:600">±₹1–3</span></div><div class="muted" style="font-size:.82rem;margin-top:.25rem">Longer delivery hours = more exposure = adjusted premium</div></div>
+            <div class="card-flat"><div style="display:flex;justify-content:space-between;align-items:center"><span>🌧️ Seasonal Monsoon</span><span style="color:var(--saffron);font-weight:600">+₹3 Jun–Sep</span></div><div class="muted" style="font-size:.82rem;margin-top:.25rem">Monsoon season increases risk → small seasonal surcharge</div></div>
+          </div>
+        </div>
+        <div class="fu fu2">
+          <div class="card-flat" style="border-color:rgba(0,212,200,.2)">
+            <div class="label" style="margin-bottom:1rem">Zero-Touch Claim Flow</div>
+            <div style="display:flex;flex-direction:column;gap:1rem">
+              <div style="display:flex;align-items:center;gap:.85rem"><div style="width:36px;height:36px;border-radius:50%;background:rgba(255,153,51,.12);border:1px solid rgba(255,153,51,.25);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0">1</div><div><div style="font-weight:600;font-size:.9rem">Trigger Detected</div><div class="muted" style="font-size:.8rem">API detects disruption in worker's city</div></div></div>
+              <div style="display:flex;align-items:center;gap:.85rem"><div style="width:36px;height:36px;border-radius:50%;background:rgba(255,153,51,.12);border:1px solid rgba(255,153,51,.25);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0">2</div><div><div style="font-weight:600;font-size:.9rem">Policy Verified</div><div class="muted" style="font-size:.8rem">System checks active coverage automatically</div></div></div>
+              <div style="display:flex;align-items:center;gap:.85rem"><div style="width:36px;height:36px;border-radius:50%;background:rgba(255,153,51,.12);border:1px solid rgba(255,153,51,.25);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0">3</div><div><div style="font-weight:600;font-size:.9rem">Payout Calculated</div><div class="muted" style="font-size:.8rem">Amount based on coverage tier and trigger type</div></div></div>
+              <div style="display:flex;align-items:center;gap:.85rem"><div style="width:36px;height:36px;border-radius:50%;background:rgba(46,213,115,.12);border:1px solid rgba(46,213,115,.25);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0">✓</div><div><div style="font-weight:600;font-size:.9rem;color:var(--success)">UPI Transfer Initiated</div><div class="muted" style="font-size:.8rem">Money sent within 2 hours. No forms. No waiting.</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="sec" style="text-align:center">
+    <div class="wrap fu">
+      <span class="label" style="display:block;margin-bottom:.5rem">Phase 2 Live</span>
+      <h2 class="sec-title">Register. Get Protected. Done.</h2>
+      <p class="muted" style="max-width:420px;margin:.5rem auto 2rem">ML pricing, 5 triggers, zero-touch claims — all active. Register in 60 seconds.</p>
+      <button class="btn btn-p" style="font-size:1rem;padding:.9rem 2.5rem" onclick="go('register')">Register as a Worker →</button>
+    </div>
+  </section>
+
+  <footer><div class="wrap"><span class="bf">GigShield</span> &nbsp;·&nbsp; Phase 2 — Automation &amp; Protection &nbsp;·&nbsp; <span style="color:var(--teal)">ML + Flask + MySQL</span></div></footer>
+</div>
+
+<!-- ══════════════════ PAGE 2 — REGISTER ══════════════════ -->
+<div id="page-register" class="page">
+  <div class="reg-page">
+    <div class="wrap">
+      <div style="margin-bottom:1.8rem">
+        <span class="label">Worker Registration</span>
+        <h2 class="sec-title" style="margin-bottom:.4rem">Register &amp; See Your AI-Priced Premium</h2>
+        <p class="muted">Fill in your details — our ML model calculates your personalised premium in real-time.</p>
+      </div>
+      <div class="reg-grid">
+
+        <!-- Form -->
+        <div class="form-card">
+          <div class="field">
+            <label for="f-name">Full Name</label>
+            <input type="text" id="f-name" placeholder="e.g. Ravi Kumar" autocomplete="off" oninput="debouncePricing()"/>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="f-city">City</label>
+              <select id="f-city" onchange="fetchPricing()">
+                <option value="" disabled selected>Select city</option>
+                <option>Mumbai</option><option>Delhi</option><option>Bengaluru</option>
+                <option>Chennai</option><option>Hyderabad</option><option>Kolkata</option>
+                <option>Pune</option><option>Ahmedabad</option><option>Jaipur</option><option>Surat</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="f-platform">Platform</label>
+              <select id="f-platform" onchange="fetchPricing()">
+                <option value="" disabled selected>Select platform</option>
+                <option>Swiggy</option><option>Zomato</option><option>Amazon</option>
+                <option>Blinkit</option><option>Zepto</option><option>Dunzo</option><option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="f-income">Avg Daily Income (₹)</label>
+              <input type="number" id="f-income" placeholder="e.g. 950" min="1" oninput="fetchPricing()"/>
+            </div>
+            <div class="field">
+              <label for="f-hours">Hours / Day</label>
+              <input type="number" id="f-hours" placeholder="8" min="1" max="18" value="8" oninput="fetchPricing()"/>
+            </div>
+          </div>
+          <button class="btn btn-p" id="reg-btn" style="width:100%;margin-top:.75rem;padding:.82rem" onclick="submitReg()">
+            Register with AI Premium →
+          </button>
+          <p style="font-size:.74rem;color:var(--muted);text-align:center;margin-top:1rem">
+            🔒 Stored securely in MySQL · Premium calculated by ML model
+          </p>
+        </div>
+
+        <!-- ML Pricing Panel -->
+        <div class="pricing-panel" id="pricing-panel">
+          <div class="label">🤖 AI Premium Calculator</div>
+          <div class="pricing-loading" id="pricing-loading">Fill in your details to see your personalised premium</div>
+          <div id="pricing-result" style="display:none">
+            <div class="final-premium">
+              <span class="fp-amt" id="fp-amount">₹–</span>
+              <div class="fp-lbl">per week · <span id="fp-plan">–</span> Plan</div>
+            </div>
+            <div class="risk-meter">
+              <div class="rm-label"><span>Zone Risk Score</span><span id="rm-score">–%</span></div>
+              <div class="rm-bar"><div class="rm-fill" id="rm-fill" style="width:0%;background:var(--saffron)"></div></div>
+            </div>
+            <div class="savings-badge" id="savings-badge" style="display:none">
+              💚 You save ₹<span id="savings-amt">0</span>/week vs flat rate — safe zone discount!
+            </div>
+            <hr class="div" style="margin:1rem 0"/>
+            <div class="label" style="margin-bottom:.6rem">Breakdown</div>
+            <div class="pricing-breakdown" id="pricing-breakdown"></div>
+            <hr class="div" style="margin:.8rem 0"/>
+            <div style="font-size:.8rem;color:var(--muted)">
+              Coverage up to <strong style="color:var(--saffron)" id="fp-coverage">₹–</strong>/week
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <footer><div class="wrap"><span class="bf">GigShield</span> &nbsp;·&nbsp; Phase 2</div></footer>
+</div>
+
+<!-- ══════════════════ PAGE 3 — DASHBOARD ════════════════ -->
+<div id="page-dashboard" class="page">
+  <div class="dash-page">
+    <div class="wrap">
+      <div class="fu" style="margin-bottom:1.8rem">
+        <span class="label">Worker Dashboard</span>
+        <h2 class="sec-title" id="dash-greeting">Welcome 👋</h2>
+        <p class="muted">Your insurance overview, live disruption monitor, and zero-touch claims.</p>
+      </div>
+      <div class="dash-grid">
+
+        <!-- LEFT -->
+        <div>
+          <!-- Profile -->
+          <div class="card-flat fu fu1" style="margin-bottom:1rem">
+            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem">
+              <div class="avatar" id="d-avatar">R</div>
+              <div><h5 id="d-name" style="font-size:1.1rem;margin-bottom:.1rem">–</h5><span class="muted" style="font-size:.8rem" id="d-id">–</span></div>
+            </div>
+            <div class="irow"><span class="il">City</span><span class="iv" id="d-city">–</span></div>
+            <div class="irow"><span class="il">Platform</span><span class="iv" id="d-platform">–</span></div>
+            <div class="irow"><span class="il">Daily Income</span><span class="iv" id="d-income">–</span></div>
+            <div class="irow"><span class="il">Hours/Day</span><span class="iv" id="d-hours">–</span></div>
+            <div class="irow"><span class="il">Plan</span><span class="iv" style="color:var(--teal)" id="d-plan">–</span></div>
+          </div>
+          <!-- Premium -->
+          <div class="premium-block fu fu2">
+            <div style="font-size:.7rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-bottom:.6rem">AI-Calculated Weekly Premium</div>
+            <span class="p-amt" id="d-premium">₹–</span>
+            <div class="p-lbl">per week · auto-deducted</div>
+            <hr class="div" style="border-color:rgba(255,153,51,.2);margin:.85rem 0"/>
+            <div style="font-size:.83rem;color:var(--muted)">Coverage up to <span style="color:var(--saffron);font-weight:700" id="d-coverage">₹–</span>/week</div>
+            <div style="margin-top:.85rem;display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap">
+              <button class="btn btn-t btn-sm" onclick="go('policy')">View Policy</button>
+              <button class="btn btn-g btn-sm" onclick="go('claims')">Claims History</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT -->
+        <div>
+          <!-- Disruption monitor -->
+          <div class="disrupt-card fu fu2" id="d-disrupt-card">
+            <div class="d-top">
+              <div>
+                <div style="font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:.55rem">
+                  Live Disruption Monitor — <span id="d-city2">–</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:.9rem">
+                  <span id="d-icon" style="font-size:2.8rem;line-height:1">⏳</span>
+                  <div>
+                    <h4 id="d-condition" style="margin:0;font-size:1.35rem">Loading…</h4>
+                    <span class="d-pill" id="d-pill">–</span>
+                  </div>
+                </div>
+                <div class="trigger-list" id="d-trigger-list"></div>
+              </div>
+              <div style="text-align:right;flex-shrink:0">
+                <div style="font-size:.7rem;color:var(--muted);margin-bottom:.3rem">Coverage Status</div>
+                <div id="d-status-text" style="font-family:'Syne',sans-serif;font-weight:700;font-size:.95rem">–</div>
+                <div id="d-status-sub" style="font-size:.76rem;color:var(--muted)">–</div>
+              </div>
+            </div>
+            <p id="d-msg" class="d-msg">–</p>
+          </div>
+
+          <!-- Zero-touch claim section -->
+          <div class="claim-section fu fu3" id="claim-section">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:.75rem">
+              <div>
+                <div style="font-weight:600;font-size:.95rem">Zero-Touch Claim</div>
+                <div class="muted" style="font-size:.82rem">Claim is processed automatically when a trigger fires</div>
+              </div>
+              <button class="btn btn-p btn-sm" id="claim-btn" onclick="submitClaim()">
+                ⚡ Trigger Claim
+              </button>
+            </div>
+            <div id="claim-result" style="display:none"></div>
+          </div>
+
+          <!-- Coverage summary -->
+          <div class="card-flat fu fu4" style="margin-top:1rem">
+            <h5 style="margin-bottom:1rem;font-size:.95rem">Coverage Summary</h5>
+            <div class="irow"><span class="il">Policy Type</span><span class="iv">Parametric Income Protection</span></div>
+            <div class="irow"><span class="il">ML Pricing</span><span class="iv" style="color:var(--teal)">Active ✓</span></div>
+            <div class="irow"><span class="il">Claim Process</span><span class="iv" style="color:var(--success)">Zero-Touch Automatic</span></div>
+            <div class="irow"><span class="il">Payout SLA</span><span class="iv">&lt; 2 hours</span></div>
+            <div class="irow"><span class="il">Active Triggers</span><span class="iv">5 automated</span></div>
+            <div class="irow"><span class="il">Status</span><span class="iv" style="color:var(--success)">✓ Active</span></div>
+          </div>
+        </div>
+
+      </div>
+      <p style="text-align:center;font-size:.76rem;color:var(--muted);margin-top:1.8rem">
+        🔄 Disruption monitor refreshes from Python backend on every visit &nbsp;|&nbsp;
+        <button style="background:none;border:none;color:var(--saffron);cursor:pointer;font-size:.76px;font-family:'DM Sans',sans-serif;text-decoration:underline" onclick="refreshDisruptions()">Refresh now</button>
+      </p>
+    </div>
+  </div>
+  <footer><div class="wrap"><span class="bf">GigShield</span> &nbsp;·&nbsp; Worker Dashboard &nbsp;·&nbsp; <span style="color:var(--teal)">Phase 2</span></div></footer>
+</div>
+
+<!-- ══════════════════ PAGE 4 — POLICY ════════════════════ -->
+<div id="page-policy" class="page">
+  <div class="policy-page">
+    <div class="wrap">
+      <div class="fu" style="margin-bottom:1.8rem">
+        <span class="label">Insurance Policy</span>
+        <h2 class="sec-title">Your Policy Document</h2>
+        <p class="muted">Full coverage terms, active triggers, and policy details.</p>
+      </div>
+
+      <!-- Policy header -->
+      <div class="policy-header fu fu1">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.2rem">
+          <div>
+            <div class="label">Policy Number</div>
+            <div class="policy-num" id="pol-num">POL-000000</div>
+          </div>
+          <div class="policy-status"><span class="ldot"></span> ACTIVE</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem">
+          <div><div class="label">Worker</div><div id="pol-name" style="font-weight:600">–</div></div>
+          <div><div class="label">Plan</div><div id="pol-plan" style="font-weight:600;color:var(--saffron)">–</div></div>
+          <div><div class="label">Weekly Premium</div><div id="pol-premium" style="font-weight:600">–</div></div>
+          <div><div class="label">Weekly Coverage</div><div id="pol-coverage" style="font-weight:600;color:var(--success)">–</div></div>
+          <div><div class="label">Annual Premium</div><div id="pol-annual" style="font-weight:600">–</div></div>
+          <div><div class="label">Valid Until</div><div id="pol-expiry" style="font-weight:600">–</div></div>
+        </div>
+      </div>
+
+      <!-- Active triggers -->
+      <div class="card-flat fu fu2" style="margin-bottom:1.2rem">
+        <h5 style="margin-bottom:1rem">Active Disruption Triggers</h5>
+        <div class="trigger-grid">
+          <div class="trigger-item"><span class="ti-icon">🌧️</span><div><div class="ti-label">Heavy Rain</div><div class="ti-threshold">Rainfall &gt; 50mm/hr · 100% coverage</div></div></div>
+          <div class="trigger-item"><span class="ti-icon">🌀</span><div><div class="ti-label">Storm / Cyclone</div><div class="ti-threshold">Wind &gt; 60 km/h · 100% coverage</div></div></div>
+          <div class="trigger-item"><span class="ti-icon">🌊</span><div><div class="ti-label">Waterlogging</div><div class="ti-threshold">Zone flood advisory · 80% coverage</div></div></div>
+          <div class="trigger-item"><span class="ti-icon">🌡️</span><div><div class="ti-label">Extreme Heat</div><div class="ti-threshold">Temp &gt; 45°C · 60% coverage</div></div></div>
+          <div class="trigger-item"><span class="ti-icon">😷</span><div><div class="ti-label">Poor Air Quality</div><div class="ti-threshold">AQI &gt; 300 · 50% coverage</div></div></div>
+        </div>
+      </div>
+
+      <!-- Policy details -->
+      <div class="card-flat fu fu3">
+        <h5 style="margin-bottom:1rem">Policy Terms</h5>
+        <div class="irow"><span class="il">Policy Type</span><span class="iv">Parametric Income Protection</span></div>
+        <div class="irow"><span class="il">Pricing Model</span><span class="iv" style="color:var(--teal)">ML Dynamic (Zone + Platform + Hours + Season)</span></div>
+        <div class="irow"><span class="il">Claim Process</span><span class="iv" style="color:var(--success)">Zero-Touch Automatic</span></div>
+        <div class="irow"><span class="il">Payout Method</span><span class="iv">UPI Direct Transfer</span></div>
+        <div class="irow"><span class="il">Payout SLA</span><span class="iv">&lt; 2 hours from trigger</span></div>
+        <div class="irow"><span class="il">Coverage Period</span><span class="iv">Weekly (auto-renew)</span></div>
+        <div class="irow"><span class="il">Cancellation</span><span class="iv">Cancel anytime, no penalty</span></div>
+        <div class="irow"><span class="il">Claim Limit</span><span class="iv">1 per trigger event per week</span></div>
+      </div>
+
+    </div>
+  </div>
+  <footer><div class="wrap"><span class="bf">GigShield</span> &nbsp;·&nbsp; Policy Document &nbsp;·&nbsp; Phase 2</div></footer>
+</div>
+
+<!-- ══════════════════ PAGE 5 — CLAIMS ════════════════════ -->
+<div id="page-claims" class="page">
+  <div class="claims-page">
+    <div class="wrap">
+      <div class="fu" style="margin-bottom:1.8rem">
+        <span class="label">Claims Management</span>
+        <h2 class="sec-title">Your Claims History</h2>
+        <p class="muted">All claims processed automatically — zero manual intervention.</p>
+      </div>
+
+      <!-- Zero-touch banner -->
+      <div class="zt-banner fu fu1">
+        <span class="zt-icon">⚡</span>
+        <div>
+          <div class="zt-title">Zero-Touch Claims Active</div>
+          <div class="zt-desc">Every claim is approved and paid automatically when a disruption trigger fires in your city. No forms. No phone calls. No waiting.</div>
+        </div>
+      </div>
+
+      <!-- Claims summary -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem" class="fu fu2">
+        <div class="as-card"><span class="as-big" id="cl-total">–</span><span class="as-lbl">Total Claims</span></div>
+        <div class="as-card"><span class="as-big" id="cl-paid" style="color:var(--success)">–</span><span class="as-lbl">Total Paid Out</span></div>
+        <div class="as-card"><span class="as-big" style="color:var(--teal)">100%</span><span class="as-lbl">Auto-Approved Rate</span></div>
+      </div>
+
+      <!-- Claims list -->
+      <div id="claims-list" class="fu fu3">
+        <div class="empty-s"><span class="spin"></span> Loading claims…</div>
+      </div>
+
+    </div>
+  </div>
+  <footer><div class="wrap"><span class="bf">GigShield</span> &nbsp;·&nbsp; Claims &nbsp;·&nbsp; Phase 2</div></footer>
+</div>
+
+<!-- ══════════════════ PAGE 6 — ADMIN ═════════════════════ -->
+<div id="page-admin" class="page">
+  <div class="admin-page">
+    <div class="wrap">
+
+      <div class="fu" style="margin-bottom:2rem;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+        <div>
+          <span class="label">Admin Panel</span>
+          <h2 class="sec-title" style="margin-bottom:.3rem">Platform Overview</h2>
+          <p class="muted"><span class="ldot"></span>Live from MySQL · Phase 2</p>
+        </div>
+        <div style="display:flex;gap:.65rem;flex-wrap:wrap">
+          <button class="btn btn-t btn-sm" onclick="go('register')">+ Register</button>
+          <button class="btn btn-g btn-sm" onclick="loadAdmin()">🔄 Refresh</button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="admin-stat">
+        <div class="as-card fu fu1"><span class="as-big" id="a-total">–</span><span class="as-lbl">Workers</span></div>
+        <div class="as-card fu fu2"><span class="as-big" id="a-revenue" style="color:var(--saffron)">–</span><span class="as-lbl">Weekly Revenue</span></div>
+        <div class="as-card fu fu3"><span class="as-big" id="a-claims" style="color:var(--success)">–</span><span class="as-lbl">Claims Paid</span></div>
+        <div class="as-card fu fu4"><span class="as-big" id="a-avg" style="color:var(--teal)">–</span><span class="as-lbl">Avg Premium</span></div>
+      </div>
+
+      <!-- Workers table -->
+      <div class="table-wrap fu fu2" style="margin-bottom:1.5rem">
+        <div class="t-head">
+          <h5 style="margin:0;font-size:.95rem">Registered Workers</h5>
+          <span class="muted" style="font-size:.8rem" id="a-count">–</span>
+        </div>
+        <div id="a-workers-body"><div class="empty-s"><span class="spin"></span> Loading…</div></div>
+      </div>
+
+      <!-- Claims table -->
+      <div class="table-wrap fu fu3">
+        <div class="t-head">
+          <h5 style="margin:0;font-size:.95rem">Recent Claims</h5>
+          <span class="chip-g" style="font-size:.74rem">All Auto-Approved</span>
+        </div>
+        <div id="a-claims-body"><div class="empty-s"><span class="spin"></span> Loading…</div></div>
+      </div>
+
+      <!-- Tier ref -->
+      <div style="margin-top:1.2rem" class="fu">
+        <span class="label" style="margin-bottom:.5rem">Premium Tier Reference (ML Model)</span>
+        <div class="tier-ref">
+          <div class="tier-i">Income &lt; ₹800 → <span class="chip-s">~₹20/wk</span> Basic</div>
+          <div class="tier-i">₹800–₹1200 → <span class="chip-s">~₹30/wk</span> Standard</div>
+          <div class="tier-i">₹1200–₹1800 → <span class="chip-s">~₹50/wk</span> Premium</div>
+          <div class="tier-i">Income &gt; ₹1800 → <span class="chip-s">~₹70/wk</span> Elite</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <footer><div class="wrap"><span class="bf">GigShield</span> &nbsp;·&nbsp; Admin &nbsp;·&nbsp; Phase 2</div></footer>
+</div>
+
+<!-- ══════════════════ JAVASCRIPT ══════════════════════════ -->
+<script>
+"use strict";
+const API = "http://127.0.0.1:5000/api";
+let currentWorker = null;
+let lastRegId     = null;
+let pricingTimer  = null;
+
+/* ── Navigation ─────────────────────────────────────────── */
+function go(page) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.getElementById("page-" + page).classList.add("active");
+  window.scrollTo({ top:0, behavior:"smooth" });
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active-nav"));
+  const pages = ["home","register","dashboard","policy","claims","admin"];
+  const idx   = pages.indexOf(page);
+  document.querySelectorAll(".nav-btn")[idx]?.classList.add("active-nav");
+  if (page === "admin")   loadAdmin();
+  if (page === "claims" && currentWorker)  loadClaims(currentWorker.id);
+  if (page === "dashboard" && currentWorker) refreshDisruptions();
+}
+
+/* ── Backend check ──────────────────────────────────────── */
+async function checkBackend() {
+  const bar = document.getElementById("db-bar");
+  try {
+    const res  = await fetch(`${API}/workers`);
+    const data = await res.json();
+    bar.className   = "db-bar ok";
+    bar.textContent = `✅ MySQL Connected · ${data.total} workers · Flask running at 127.0.0.1:5000`;
+    updateBadge(data.total);
+    document.getElementById("home-workers").textContent = data.total;
+    document.getElementById("home-avg").textContent     = data.total ? `₹${data.avg_premium}/wk` : "–";
+  } catch {
+    bar.className   = "db-bar err";
+    bar.textContent = "❌ Cannot reach Flask backend — run: python app.py";
+  }
+}
+
+function updateBadge(n) { document.getElementById("nav-badge").textContent = n; }
+
+/* ── ML Pricing preview ─────────────────────────────────── */
+function fetchPricing() {
+  const income   = parseInt(document.getElementById("f-income").value);
+  const city     = document.getElementById("f-city").value;
+  const platform = document.getElementById("f-platform").value;
+  const hours    = parseFloat(document.getElementById("f-hours").value) || 8;
+
+  if (!income || income <= 0 || !city || !platform) return;
+
+  clearTimeout(pricingTimer);
+  pricingTimer = setTimeout(async () => {
+    try {
+      const res  = await fetch(`${API}/premium-preview`, {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ daily_income:income, city, platform, hours_per_day:hours }),
+      });
+      const data = await res.json();
+      if (data.success) renderPricing(data.pricing);
+    } catch {}
+  }, 400);
+}
+
+function debouncePricing() { clearTimeout(pricingTimer); pricingTimer = setTimeout(fetchPricing, 500); }
+
+function renderPricing(p) {
+  document.getElementById("pricing-loading").style.display = "none";
+  document.getElementById("pricing-result").style.display  = "block";
+  document.getElementById("fp-amount").textContent   = `₹${p.premium}`;
+  document.getElementById("fp-plan").textContent     = p.plan;
+  document.getElementById("fp-coverage").textContent = `₹${p.coverage}`;
+  document.getElementById("rm-score").textContent    = `${p.zone_risk_score}%`;
+
+  const fill = document.getElementById("rm-fill");
+  fill.style.width = `${p.zone_risk_score}%`;
+  fill.style.background = p.zone_risk_score > 70
+    ? "var(--danger)" : p.zone_risk_score > 45
+    ? "var(--warn)" : "var(--success)";
+
+  if (p.savings_vs_flat > 0) {
+    document.getElementById("savings-badge").style.display = "block";
+    document.getElementById("savings-amt").textContent = p.savings_vs_flat;
+  } else {
+    document.getElementById("savings-badge").style.display = "none";
+  }
+
+  const bd = document.getElementById("pricing-breakdown");
+  bd.innerHTML = Object.entries(p.breakdown).map(([k,v]) =>
+    `<div class="pb-row"><span class="pb-label">${k}</span><span class="pb-val">${v}</span></div>`
+  ).join("");
+}
+
+/* ── Registration ───────────────────────────────────────── */
+async function submitReg() {
+  const name     = document.getElementById("f-name").value.trim();
+  const city     = document.getElementById("f-city").value;
+  const platform = document.getElementById("f-platform").value;
+  const income   = parseInt(document.getElementById("f-income").value);
+  const hours    = parseFloat(document.getElementById("f-hours").value) || 8;
+
+  if (!name)                   return toast("Please enter your name.", "err");
+  if (!city)                   return toast("Please select your city.", "err");
+  if (!platform)               return toast("Please select your platform.", "err");
+  if (!income || income <= 0)  return toast("Please enter a valid income.", "err");
+
+  const btn = document.getElementById("reg-btn");
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spin"></span> Saving to MySQL…`;
+
+  try {
+    const res  = await fetch(`${API}/register`, {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ name, city, platform, daily_income:income, hours_per_day:hours }),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) return toast(data.error || "Registration failed.", "err");
+
+    const w      = data.worker;
+    lastRegId    = w.id;
+    currentWorker = w;
+
+    ["f-name","f-city","f-platform","f-income"].forEach(id => {
+      document.getElementById(id).value = "";
+    });
+    document.getElementById("f-hours").value = "8";
+    document.getElementById("pricing-result").style.display  = "none";
+    document.getElementById("pricing-loading").style.display = "block";
+    document.getElementById("pricing-loading").textContent   = "Fill in your details to see your personalised premium";
+
+    /* Show policy/claims nav links */
+    document.getElementById("nav-policy").style.display = "inline-flex";
+    document.getElementById("nav-claims").style.display = "inline-flex";
+
+    toast(`🎉 ${name.split(" ")[0]} registered! ML Premium: ₹${w.premium}/week`, "ok");
+
+    const all = await fetch(`${API}/workers`);
+    const allD = await all.json();
+    if (allD.success) updateBadge(allD.total);
+
+    setTimeout(() => {
+      loadDash(w);
+      go("dashboard");
+    }, 900);
+
+  } catch {
+    toast("Cannot reach Flask. Run: python app.py", "err");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = "Register with AI Premium →";
+  }
+}
+
+/* ── Dashboard ──────────────────────────────────────────── */
+function loadDash(w) {
+  document.getElementById("dash-greeting").textContent = `Welcome back, ${w.name.split(" ")[0]} 👋`;
+  document.getElementById("d-avatar").textContent     = w.name[0].toUpperCase();
+  document.getElementById("d-name").textContent       = w.name;
+  document.getElementById("d-id").textContent         = `Worker ID #${w.id} · Policy POL-${String(w.id).padStart(6,"0")}`;
+  document.getElementById("d-city").textContent       = w.city;
+  document.getElementById("d-platform").textContent   = w.platform;
+  document.getElementById("d-income").textContent     = `₹${w.daily_income}`;
+  document.getElementById("d-hours").textContent      = `${w.hours_per_day || 8} hrs`;
+  document.getElementById("d-plan").textContent       = w.plan || "–";
+  document.getElementById("d-premium").textContent    = `₹${w.premium}`;
+  document.getElementById("d-coverage").textContent   = `₹${w.coverage}`;
+  document.getElementById("d-city2").textContent      = w.city;
+
+  /* Policy page */
+  document.getElementById("pol-num").textContent      = `POL-${String(w.id).padStart(6,"0")}`;
+  document.getElementById("pol-name").textContent     = w.name;
+  document.getElementById("pol-plan").textContent     = w.plan || "–";
+  document.getElementById("pol-premium").textContent  = `₹${w.premium}/week`;
+  document.getElementById("pol-coverage").textContent = `₹${w.coverage}/week`;
+  document.getElementById("pol-annual").textContent   = `₹${w.premium * 52}/year`;
+
+  const expiry = new Date(); expiry.setFullYear(expiry.getFullYear() + 1);
+  document.getElementById("pol-expiry").textContent = expiry.toLocaleDateString("en-IN", {day:"2-digit",month:"short",year:"numeric"});
+
+  fetchDisruptions(w.city);
+}
+
+/* ── Disruptions ────────────────────────────────────────── */
+async function fetchDisruptions(city) {
+  document.getElementById("d-icon").textContent      = "⏳";
+  document.getElementById("d-condition").textContent = "Checking…";
+  document.getElementById("d-msg").textContent       = "Fetching from Python backend…";
+
+  try {
+    const res  = await fetch(`${API}/disruptions/${encodeURIComponent(city)}`);
+    const data = await res.json();
+    if (data.success) renderDisruptions(data.disruption, city);
+  } catch {
+    document.getElementById("d-condition").textContent = "Unavailable";
+    document.getElementById("d-msg").textContent       = "Cannot reach Flask. Run: python app.py";
+  }
+}
+
+function renderDisruptions(d, city) {
+  const cls = d.risk_class || "low";
+  const colors = { high:"var(--danger)", medium:"var(--warn)", low:"var(--success)" };
+  const statuses = {
+    high:   { text:"🔴 TRIGGERED",   sub:"Payout processing…"  },
+    medium: { text:"🟡 MONITORING",  sub:"Watching conditions"  },
+    low:    { text:"🟢 ACTIVE",      sub:"No disruption today"  },
+  };
+
+  document.getElementById("d-disrupt-card").className = `disrupt-card fu fu2 ${cls}`;
+  document.getElementById("d-icon").textContent        = d.icon;
+  document.getElementById("d-condition").textContent   = d.label;
+  document.getElementById("d-msg").textContent         = d.message;
+
+  const pill = document.getElementById("d-pill");
+  pill.textContent = `${d.risk_level} Risk`;
+  pill.className   = `d-pill ${cls}`;
+
+  const st = document.getElementById("d-status-text");
+  st.textContent = statuses[cls]?.text || "–";
+  st.style.color = colors[cls];
+  document.getElementById("d-status-sub").textContent = statuses[cls]?.sub || "–";
+
+  // Active trigger tags
+  const tl = document.getElementById("d-trigger-list");
+  tl.innerHTML = (d.active_triggers || []).map(t =>
+    `<span class="t-tag">${t.replace("_"," ")}</span>`
+  ).join("");
+
+  // Claim button state
+  const claimBtn = document.getElementById("claim-btn");
+  if (d.claim_eligible) {
+    claimBtn.disabled = false;
+    claimBtn.innerHTML = "⚡ Trigger Claim Now";
+    claimBtn.className = "btn btn-p btn-sm";
+  } else {
+    claimBtn.disabled = true;
+    claimBtn.innerHTML = "✓ No Disruption — Claim Not Available";
+    claimBtn.className = "btn btn-g btn-sm";
+  }
+}
+
+function refreshDisruptions() {
+  if (currentWorker) fetchDisruptions(currentWorker.city);
+}
+
+/* ── Submit Claim ───────────────────────────────────────── */
+async function submitClaim() {
+  if (!currentWorker) return toast("No worker loaded.", "err");
+  const btn = document.getElementById("claim-btn");
+  btn.disabled = true;
+  btn.innerHTML = `<span class="spin"></span> Processing…`;
+
+  try {
+    const res  = await fetch(`${API}/claim`, {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ worker_id: currentWorker.id }),
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      toast(data.error || "Claim failed.", "err");
+      btn.disabled = false;
+      btn.innerHTML = "⚡ Trigger Claim";
+      return;
+    }
+
+    const c = data.claim;
+    const resultDiv = document.getElementById("claim-result");
+    resultDiv.style.display = "block";
+    resultDiv.innerHTML = `
+      <div style="background:rgba(46,213,115,.08);border:1px solid rgba(46,213,115,.25);border-radius:var(--r2);padding:1rem;margin-top:.5rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem">
+          <div>
+            <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--success)">${c.claim_id}</div>
+            <div style="font-size:.82rem;color:var(--muted)">${c.trigger_label} · ${c.coverage_pct}% coverage</div>
+          </div>
+          <div style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:var(--success)">₹${c.payout_amount}</div>
+        </div>
+        <div style="font-size:.8rem;margin-top:.5rem;color:var(--muted)">
+          ⚡ Auto-approved · UPI transfer initiated · No forms required
+        </div>
+      </div>`;
+
+    toast(`✓ Claim ${c.claim_id} approved! ₹${c.payout_amount} payout initiated.`, "ok");
+
+  } catch {
+    toast("Cannot reach Flask.", "err");
+    btn.disabled = false;
+    btn.innerHTML = "⚡ Trigger Claim";
+  }
+}
+
+/* ── Load Claims ────────────────────────────────────────── */
+async function loadClaims(workerId) {
+  document.getElementById("claims-list").innerHTML =
+    `<div class="empty-s"><span class="spin"></span> Loading claims…</div>`;
+  try {
+    const res  = await fetch(`${API}/claims/${workerId}`);
+    const data = await res.json();
+    document.getElementById("cl-total").textContent = data.total_claims;
+    document.getElementById("cl-paid").textContent  = `₹${data.total_paid}`;
+    renderClaimsList(data.claims);
+  } catch {
+    document.getElementById("claims-list").innerHTML =
+      `<div class="empty-s">Cannot reach Flask. Run: python app.py</div>`;
+  }
+}
+
+function renderClaimsList(claims) {
+  const el = document.getElementById("claims-list");
+  if (!claims || !claims.length) {
+    el.innerHTML = `
+      <div class="empty-s">
+        <span class="ei">📋</span>
+        <p style="font-weight:600;margin-bottom:.3rem">No claims yet</p>
+        <p class="muted" style="font-size:.85rem">Go to Dashboard and trigger a claim when a disruption is active.</p>
+      </div>`;
+    return;
+  }
+  el.innerHTML = claims.map(c => `
+    <div class="claim-card">
+      <div class="claim-header">
+        <div>
+          <div class="claim-id">${c.claim_id}</div>
+          <div class="muted" style="font-size:.8rem">${c.trigger_label} · ${c.processed_at}</div>
+        </div>
+        <div class="claim-amount">₹${c.payout_amount}</div>
+      </div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+        <span class="chip-g">${c.status}</span>
+        <span class="chip-b">${c.coverage_pct}% coverage</span>
+        <span class="chip-t">UPI Transferred</span>
+      </div>
+      <div class="payout-bar">
+        <div class="pb-label-row"><span>Coverage Used</span><span>${c.coverage_pct}%</span></div>
+        <div class="pb-track"><div class="pb-fill" style="width:${c.coverage_pct}%"></div></div>
+      </div>
+    </div>`).join("");
+}
+
+/* ── Admin ──────────────────────────────────────────────── */
+async function loadAdmin() {
+  try {
+    const [wRes, cRes] = await Promise.all([
+      fetch(`${API}/workers`),
+      fetch(`${API}/claims`),
+    ]);
+    const wData = await wRes.json();
+    const cData = await cRes.json();
+
+    if (wData.success) {
+      document.getElementById("a-total").textContent   = wData.total;
+      document.getElementById("a-revenue").textContent = `₹${wData.total_premium}`;
+      document.getElementById("a-avg").textContent     = `₹${wData.avg_premium}`;
+      document.getElementById("a-count").textContent   = `${wData.total} total`;
+      updateBadge(wData.total);
+      renderAdminWorkers(wData.workers);
+    }
+    if (cData.success) {
+      document.getElementById("a-claims").textContent = `₹${cData.total_paid}`;
+      renderAdminClaims(cData.claims);
+    }
+  } catch {
+    document.getElementById("a-workers-body").innerHTML =
+      `<div class="empty-s">Cannot reach Flask. Run: python app.py</div>`;
+  }
+}
+
+function renderAdminWorkers(workers) {
+  const body = document.getElementById("a-workers-body");
+  if (!workers || !workers.length) {
+    body.innerHTML = `
+      <div class="empty-s">
+        <span class="ei">📋</span>
+        <p style="font-weight:600;margin-bottom:.3rem">No workers yet</p>
+        <button class="btn btn-p btn-sm" style="margin-top:.75rem" onclick="go('register')">+ Register First Worker</button>
+      </div>`;
+    return;
+  }
+  const rows = workers.map((w, i) => {
+    const isNew  = w.id === lastRegId;
+    const safe   = w.name?.replace(/'/g,"\'") || "";
+    return `
+      <tr class="${isNew ? "new-row" : ""}">
+        <td style="color:var(--muted);font-size:.8rem">${i+1}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:.55rem">
+            <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--saffron),var(--teal));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;font-size:.74rem;color:#080c12;flex-shrink:0">
+              ${w.name?.[0]?.toUpperCase() || "?"}
+            </div>
+            <span>${w.name || "–"}${isNew ? '<span style="background:rgba(46,213,115,.18);color:var(--success);border-radius:4px;padding:.08rem .45rem;font-size:.68rem;font-weight:700;margin-left:.4rem">NEW</span>' : ""}</span>
+          </div>
+        </td>
+        <td>${w.city}</td>
+        <td><span class="chip-t">${w.platform}</span></td>
+        <td>₹${w.daily_income}</td>
+        <td><span class="chip-s">₹${w.premium}/wk</span></td>
+        <td style="font-size:.76rem;color:var(--muted)">${w.registered_at || "–"}</td>
+        <td>
+          <div style="display:flex;gap:.35rem">
+            <button class="btn btn-t btn-xs" onclick="adminViewWorker(${w.id})">View</button>
+            <button class="btn-del" onclick="deleteWorker(${w.id},'${safe}')">✕</button>
+          </div>
+        </td>
+      </tr>`;
+  }).join("");
+
+  body.innerHTML = `
+    <table>
+      <thead><tr>
+        <th>#</th><th>Name</th><th>City</th><th>Platform</th>
+        <th>Daily Income</th><th>ML Premium</th><th>Registered</th><th>Actions</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function renderAdminClaims(claims) {
+  const body = document.getElementById("a-claims-body");
+  if (!claims || !claims.length) {
+    body.innerHTML = `<div class="empty-s"><span class="ei">📋</span><p>No claims yet</p></div>`;
+    return;
+  }
+  const rows = claims.slice(0,20).map((c, i) => `
+    <tr>
+      <td style="color:var(--muted);font-size:.8rem">${i+1}</td>
+      <td style="font-family:'Syne',sans-serif;font-weight:600;color:var(--saffron);font-size:.85rem">${c.claim_id}</td>
+      <td>${c.worker_name || "–"}</td>
+      <td>${c.city || "–"}</td>
+      <td>${c.trigger_label}</td>
+      <td><span style="font-family:'Syne',sans-serif;font-weight:700;color:var(--success)">₹${c.payout_amount}</span></td>
+      <td><span class="chip-g">${c.status}</span></td>
+      <td style="font-size:.76rem;color:var(--muted)">${c.processed_at || "–"}</td>
+    </tr>`).join("");
+
+  body.innerHTML = `
+    <table>
+      <thead><tr>
+        <th>#</th><th>Claim ID</th><th>Worker</th><th>City</th>
+        <th>Trigger</th><th>Payout</th><th>Status</th><th>Processed</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+async function adminViewWorker(id) {
+  try {
+    const res  = await fetch(`${API}/worker/${id}`);
+    const data = await res.json();
+    if (!data.success) return toast("Worker not found.", "err");
+    currentWorker = data.worker;
+    document.getElementById("nav-policy").style.display = "inline-flex";
+    document.getElementById("nav-claims").style.display = "inline-flex";
+    loadDash(data.worker);
+    go("dashboard");
+  } catch {
+    toast("Cannot reach Flask.", "err");
+  }
+}
+
+async function deleteWorker(id, name) {
+  if (!confirm(`Remove ${name} from MySQL?`)) return;
+  try {
+    const res  = await fetch(`${API}/worker/${id}`, { method:"DELETE" });
+    const data = await res.json();
+    if (data.success) { toast(`${name} deleted.`, "err"); loadAdmin(); }
+    else toast(data.error || "Delete failed.", "err");
+  } catch {
+    toast("Cannot reach Flask.", "err");
+  }
+}
+
+/* ── Toast ──────────────────────────────────────────────── */
+function toast(msg, type="ok") {
+  const t = document.getElementById("toast");
+  t.textContent   = msg;
+  t.className     = `toast ${type}`;
+  t.style.display = "block";
+  clearTimeout(t._t);
+  t._t = setTimeout(() => { t.style.display = "none"; }, 4500);
+}
+
+/* ── Init ───────────────────────────────────────────────── */
+checkBackend();
+</script>
+</body>
+</html>
